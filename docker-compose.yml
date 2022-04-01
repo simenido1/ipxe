@@ -1,0 +1,11 @@
+version: '3.4'
+
+services:
+  ipxe:
+    image: ipxe
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: /bin/bash -c "make bin/ipxe.iso"
+    volumes:
+      - ./src:/usr/src/ipxe

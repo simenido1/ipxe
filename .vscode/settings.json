@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "prompt.h": "c",
+        "dhcp.h": "c",
+        "uaccess.h": "c",
+        "ioapi.h": "c",
+        "new": "c",
+        "typeinfo": "c",
+        "shell.h": "c",
+        "cstdlib": "c",
+        "STDLIB.H": "cpp",
+        "stdio.h": "c"
+    }
+}
