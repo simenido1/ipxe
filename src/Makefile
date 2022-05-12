@@ -12,6 +12,8 @@ MAKEDEPS	:= Makefile
 CROSS_COMPILE	?= $(CROSS)
 SYMBOL_PREFIX	:=
 
+# %.h:
+# 	@:
 ###############################################################################
 #
 # Locations of tools
@@ -64,6 +66,11 @@ SRCDIRS		:=
 SRCDIRS		+= libgcc
 SRCDIRS		+= core
 SRCDIRS		+= net net/tcp net/udp net/infiniband
+SRCDIRS		+= ffmpeg
+SRCDIRS		+= ffmpeg/libavutil
+SRCDIRS		+= ffmpeg/libavformat
+SRCDIRS		+= ffmpeg/libavcodec
+SRCDIRS		+= ffmpeg/fdlibm
 SRCDIRS		+= image
 SRCDIRS		+= drivers/bus
 SRCDIRS		+= drivers/net
@@ -119,11 +126,30 @@ SRCDIRS_INSEC	+= drivers/net/ath/ath9k
 NON_AUTO_SRCS	:=
 NON_AUTO_SRCS	+= core/version.c
 NON_AUTO_SRCS	+= drivers/net/prism2.c
-
+NON_AUTO_SRCS	+= ffmpeg/libavformat/muxer_list.c
+NON_AUTO_SRCS	+= ffmpeg/libavformat/demuxer_list.c
+NON_AUTO_SRCS	+= ffmpeg/libavformat/protocol_list.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/codec_list.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/bsf_list.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/parser_list.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/pel_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/hpel_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/qpel_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/bit_depth_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264_mb_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264_mc_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264chroma_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/videodsp_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264dsp_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264addpx_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264qpel_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264pred_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264idct_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/simple_idct_template.c
 # INCDIRS lists the include path
 #
 INCDIRS		:=
-INCDIRS		+= include .
+INCDIRS		+= include . ffmpeg /usr/include
 
 ###############################################################################
 #

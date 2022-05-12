@@ -37,3 +37,6 @@ REQUIRE_OBJECT ( pnm );
 #ifdef IMAGE_PNG
 REQUIRE_OBJECT ( png );
 #endif
+#ifdef IMAGE_AVI
+REQUIRE_OBJECT ( avi );
+#endif

@@ -19,5 +19,10 @@ typedef signed long long	int64_t;
 
 typedef unsigned long		physaddr_t;
 typedef unsigned long		intptr_t;
+typedef unsigned long		uintptr_t;
+
+typedef int32_t ptrdiff_t;
+
+#define SIZE_MAX		(4294967295UL)
 
 #endif /* _BITS_STDINT_H */

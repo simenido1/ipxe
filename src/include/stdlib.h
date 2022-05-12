@@ -8,6 +8,22 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 
 /*****************************************************************************
  *
+ * Other Features
+ *
+ ****************************************************************************
+ */
+
+typedef int(*__compar_fn_t)(const void *, const void *);
+extern void qsort (void *const pbase, size_t total_elems, size_t size, __compar_fn_t cmp);
+extern long long int llabs (long long int i);
+extern void * bsearch (const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
+extern double fabs(double x);
+extern double frexp(double value, int *eptr);
+extern double floor(double num);
+
+
+/*****************************************************************************
+ *
  * Numeric parsing
  *
  ****************************************************************************
@@ -16,6 +32,9 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 extern unsigned long strtoul ( const char *string, char **endp, int base );
 extern unsigned long long strtoull ( const char *string, char **endp,
 				     int base );
+extern long int strtol(const char *string, char **endPtr, int base);
+extern double strtod(const char *string, char **endPtr);
+extern long long strtoll(const char *nptr, char **endptr, int base);
 
 /*****************************************************************************
  *

@@ -110,14 +110,14 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 
 /* Get definitions for file identifiers */
 #include <ipxe/errfile.h>
-
+#include <stdint.h>
 /* If we do not have a valid file identifier, generate a compiler
  * warning upon usage of any error codes.  (Don't just use a #warning,
  * because some files include errno.h but don't ever actually use any
  * error codes.)
  */
 #if ! ERRFILE
-extern char missing_errfile_declaration[] __attribute__ (( deprecated ));
+extern char missing_errfile_declaration[]/* __attribute__ (( deprecated ))*/;
 #undef ERRFILE
 #define ERRFILE ( ( int ) ( 0 * ( ( intptr_t ) missing_errfile_declaration ) ) )
 #endif

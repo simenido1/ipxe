@@ -461,7 +461,7 @@ CFLAGS		+= -g
 ifeq ($(CCTYPE),gcc)
 CFLAGS		+= -ffreestanding
 CFLAGS		+= -fcommon
-CFLAGS		+= -Wall -W -Wformat-nonliteral
+CFLAGS		+= -Wall -W -Wformat-nonliteral -Werror=implicit-function-declaration
 HOST_CFLAGS	+= -Wall -W -Wformat-nonliteral
 endif
 CFLAGS		+= $(WORKAROUND_CFLAGS) $(EXTRA_CFLAGS)
@@ -472,7 +472,7 @@ HOST_CFLAGS	+= -O2 -g
 # Inhibit -Werror if NO_WERROR is specified on make command line
 #
 ifneq ($(NO_WERROR),1)
-CFLAGS		+= -Werror
+# CFLAGS		+= -Werror
 ASFLAGS		+= --fatal-warnings
 HOST_CFLAGS	+= -Werror
 endif
@@ -864,7 +864,7 @@ define deps_template_parts
 	@$(ECHO) "  [DEPS] $(1)"
 	@$(MKDIR) -p $(BIN)/deps/$(dir $(1))
 	$(Q)$(CPP) $(CFLAGS) $(CFLAGS_$(2)) $(CFLAGS_$(3)) -DOBJECT=$(3) \
-		-Wno-error -M $(1) -MG -MP | \
+		-Wno-error -M $(1) -MP | \
 		sed 's/\.o[[:blank:]]*:/_DEPS +=/' > $(BIN)/deps/$(1).d
 endef
 

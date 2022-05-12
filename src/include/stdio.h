@@ -25,6 +25,8 @@ extern int vsnprintf ( char *buf, size_t size, const char *fmt, va_list args );
 
 extern int vasprintf ( char **strp, const char *fmt, va_list args );
 
+extern int sscanf(const char *ibuf, const char *fmt, ...);
+
 /**
  * Write a formatted string to a buffer
  *
@@ -47,5 +49,10 @@ extern int vasprintf ( char **strp, const char *fmt, va_list args );
 static inline int vsprintf ( char *buf, const char *fmt, va_list args ) {
 	return vsnprintf ( buf, ~( ( size_t ) 0 ), fmt, args );
 }
+
+/*macros for avio_seek, equvalent to fseek*/
+#define SEEK_CUR 1
+#define SEEK_END 2
+#define SEEK_SET 0
 
 #endif /* _STDIO_H */

@@ -49,5 +49,6 @@ static inline __attribute__ (( always_inline )) time_t time ( time_t *t ) {
 }
 
 extern time_t mktime ( struct tm *tm );
+extern int secs_to_tm(long long t, struct tm *tm);
 
 #endif /* _TIME_H */
