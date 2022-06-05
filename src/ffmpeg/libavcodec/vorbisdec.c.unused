@@ -1356,7 +1356,7 @@ static av_always_inline int setup_classifs(vorbis_context *vc,
 
             ff_dlog(NULL, "Classword: %u\n", temp);
 
-            av_assert0(temp < 65536);
+          //avassert0(temp < 65536);
 
             if (temp < 0) {
                 av_log(vc->avctx, AV_LOG_ERROR,

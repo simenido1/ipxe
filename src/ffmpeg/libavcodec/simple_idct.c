@@ -26,10 +26,8 @@
  */
 
 #include "libavutil/intreadwrite.h"
-#include "libavutil/internal.h"
 #include "mathops.h"
 #include "simple_idct.h"
-#include <string.h>
 
 #define IN_IDCT_DEPTH 16
 

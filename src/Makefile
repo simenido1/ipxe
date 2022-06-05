@@ -146,6 +146,7 @@ NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264qpel_template.c
 NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264pred_template.c
 NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264idct_template.c
 NON_AUTO_SRCS	+= ffmpeg/libavcodec/simple_idct_template.c
+NON_AUTO_SRCS	+= ffmpeg/libavcodec/jfdctint_template.c
 # INCDIRS lists the include path
 #
 INCDIRS		:=

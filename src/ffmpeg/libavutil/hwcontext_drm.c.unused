@@ -147,7 +147,7 @@ static int drm_map_frame(AVHWFramesContext *hwfc,
     sync_start.flags = DMA_BUF_SYNC_START | map->sync_flags;
 #endif
 
-    av_assert0(desc->nb_objects <= AV_DRM_MAX_PLANES);
+  //avassert0(desc->nb_objects <= AV_DRM_MAX_PLANES);
     for (i = 0; i < desc->nb_objects; i++) {
         addr = mmap(NULL, desc->objects[i].size, mmap_prot, MAP_SHARED,
                     desc->objects[i].fd, 0);
@@ -181,7 +181,7 @@ static int drm_map_frame(AVHWFramesContext *hwfc,
             ++plane;
         }
     }
-    av_assert0(plane <= AV_DRM_MAX_PLANES);
+  //avassert0(plane <= AV_DRM_MAX_PLANES);
 
     dst->width  = src->width;
     dst->height = src->height;

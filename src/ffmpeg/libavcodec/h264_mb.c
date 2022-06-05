@@ -35,7 +35,6 @@
 #include "h264_ps.h"
 #include "qpeldsp.h"
 #include "threadframe.h"
-#include <string.h>
 
 static inline int get_lowest_part_list_y(H264SliceContext *sl,
                                          int n, int height, int y_offset, int list)
@@ -620,7 +619,6 @@ static av_always_inline void hl_decode_mb_predict_luma(const H264Context *h,
                                                        int linesize,
                                                        uint8_t *dest_y, int p)
 {
-    (void)simple;
     void (*idct_add)(uint8_t *dst, int16_t *block, int stride);
     void (*idct_dc_add)(uint8_t *dst, int16_t *block, int stride);
     int i;
@@ -639,10 +637,10 @@ static av_always_inline void hl_decode_mb_predict_luma(const H264Context *h,
                 uint8_t *const ptr = dest_y + block_offset[i];
                 const int dir      = sl->intra4x4_pred_mode_cache[scan8[i]];
                 if (transform_bypass && h->ps.sps->profile_idc == 244 && dir <= 1) {
-                    if (h->x264_build < 151) {
-                        h->hpc.pred8x8l_add[dir](ptr, sl->mb + ((i * 16 + p * 256) << pixel_shift), linesize);
+                    if (h->x264_build < 151U) {
+                        h->hpc.pred8x8l_add[dir](ptr, sl->mb + (i * 16 + p * 256 << pixel_shift), linesize);
                     } else
-                        h->hpc.pred8x8l_filter_add[dir](ptr, sl->mb + ((i * 16 + p * 256) << pixel_shift),
+                        h->hpc.pred8x8l_filter_add[dir](ptr, sl->mb + (i * 16 + p * 256 << pixel_shift),
                                                         (sl-> topleft_samples_available << i) & 0x8000,
                                                         (sl->topright_samples_available << i) & 0x4000, linesize);
                 } else {
@@ -651,9 +649,9 @@ static av_always_inline void hl_decode_mb_predict_luma(const H264Context *h,
                                          (sl->topright_samples_available << i) & 0x4000, linesize);
                     if (nnz) {
                         if (nnz == 1 && dctcoef_get(sl->mb, pixel_shift, i * 16 + p * 256))
-                            idct_dc_add(ptr, sl->mb + ((i * 16 + p * 256) << pixel_shift), linesize);
+                            idct_dc_add(ptr, sl->mb + (i * 16 + p * 256 << pixel_shift), linesize);
                         else
-                            idct_add(ptr, sl->mb + ((i * 16 + p * 256) << pixel_shift), linesize);
+                            idct_add(ptr, sl->mb + (i * 16 + p * 256 << pixel_shift), linesize);
                     }
                 }
             }
@@ -670,7 +668,7 @@ static av_always_inline void hl_decode_mb_predict_luma(const H264Context *h,
                 const int dir      = sl->intra4x4_pred_mode_cache[scan8[i]];
 
                 if (transform_bypass && h->ps.sps->profile_idc == 244 && dir <= 1) {
-                    h->hpc.pred4x4_add[dir](ptr, sl->mb + ((i * 16 + p * 256) << pixel_shift), linesize);
+                    h->hpc.pred4x4_add[dir](ptr, sl->mb + (i * 16 + p * 256 << pixel_shift), linesize);
                 } else {
                     uint8_t *topright;
                     int nnz, tr;
@@ -695,9 +693,9 @@ static av_always_inline void hl_decode_mb_predict_luma(const H264Context *h,
                     nnz = sl->non_zero_count_cache[scan8[i + p * 16]];
                     if (nnz) {
                         if (nnz == 1 && dctcoef_get(sl->mb, pixel_shift, i * 16 + p * 256))
-                            idct_dc_add(ptr, sl->mb + ((i * 16 + p * 256) << pixel_shift), linesize);
+                            idct_dc_add(ptr, sl->mb + (i * 16 + p * 256 << pixel_shift), linesize);
                         else
-                            idct_add(ptr, sl->mb + ((i * 16 + p * 256) << pixel_shift), linesize);
+                            idct_add(ptr, sl->mb + (i * 16 + p * 256 << pixel_shift), linesize);
                     }
                 }
             }
@@ -734,7 +732,6 @@ static av_always_inline void hl_decode_mb_idct_luma(const H264Context *h, H264Sl
                                                     int linesize,
                                                     uint8_t *dest_y, int p)
 {
-    (void)simple;
     void (*idct_add)(uint8_t *dst, int16_t *block, int stride);
     int i;
     block_offset += 16 * p;
@@ -752,7 +749,7 @@ static av_always_inline void hl_decode_mb_idct_luma(const H264Context *h, H264Sl
                         if (sl->non_zero_count_cache[scan8[i + p * 16]] ||
                             dctcoef_get(sl->mb, pixel_shift, i * 16 + p * 256))
                             h->h264dsp.h264_add_pixels4_clear(dest_y + block_offset[i],
-                                                              sl->mb + ((i * 16 + p * 256) << pixel_shift),
+                                                              sl->mb + (i * 16 + p * 256 << pixel_shift),
                                                               linesize);
                 }
             } else {
@@ -769,7 +766,7 @@ static av_always_inline void hl_decode_mb_idct_luma(const H264Context *h, H264Sl
                 for (i = 0; i < 16; i += di)
                     if (sl->non_zero_count_cache[scan8[i + p * 16]])
                         idct_add(dest_y + block_offset[i],
-                                 sl->mb + ((i * 16 + p * 256) << pixel_shift),
+                                 sl->mb + (i * 16 + p * 256 << pixel_shift),
                                  linesize);
             } else {
                 if (IS_8x8DCT(mb_type))

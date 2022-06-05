@@ -31,8 +31,6 @@
 #include "id3v2.h"
 #include "internal.h"
 
-#include <string.h>
-
 
 /**
  * @file
@@ -92,8 +90,6 @@ enum AVCodecID av_guess_codec(const AVOutputFormat *fmt, const char *short_name,
                               const char *filename, const char *mime_type,
                               enum AVMediaType type)
 {
-    (void)short_name;
-    (void)mime_type;
     if (av_match_name("segment", fmt->name) || av_match_name("ssegment", fmt->name)) {
         const AVOutputFormat *fmt2 = av_guess_format(NULL, filename, NULL);
         if (fmt2)
@@ -139,7 +135,7 @@ const AVInputFormat *av_probe_input_format3(const AVProbeData *pd,
     const AVInputFormat *fmt = NULL;
     int score, score_max = 0;
     void *i = 0;
-    static const uint8_t zerobuffer[AVPROBE_PADDING_SIZE];
+    const static uint8_t zerobuffer[AVPROBE_PADDING_SIZE];
     enum nodat {
         NO_ID3,
         ID3_ALMOST_GREATER_PROBE,
@@ -232,7 +228,7 @@ int av_probe_input_buffer2(AVIOContext *pb, const AVInputFormat **fmt,
                            const char *filename, void *logctx,
                            unsigned int offset, unsigned int max_probe_size)
 {
-    AVProbeData pd = { filename ? filename : "" , NULL, 0, NULL};
+    AVProbeData pd = { filename ? filename : "" };
     uint8_t *buf = NULL;
     int ret = 0, probe_size, buf_offset = 0;
     int score = 0;
@@ -260,10 +256,10 @@ int av_probe_input_buffer2(AVIOContext *pb, const AVInputFormat **fmt,
         }
     }
 
-    for (probe_size = PROBE_BUF_MIN; (unsigned)probe_size <= max_probe_size && !*fmt;
-         probe_size = FFMIN((unsigned)(probe_size << 1),
-                            FFMAX(max_probe_size, (unsigned)(probe_size + 1)))) {
-        score = probe_size < (int)max_probe_size ? AVPROBE_SCORE_RETRY : 0;
+    for (probe_size = PROBE_BUF_MIN; probe_size <= max_probe_size && !*fmt;
+         probe_size = FFMIN(probe_size << 1,
+                            FFMAX(max_probe_size, probe_size + 1))) {
+        score = probe_size < max_probe_size ? AVPROBE_SCORE_RETRY : 0;
 
         /* Read probe data. */
         if ((ret = av_reallocp(&buf, probe_size + AVPROBE_PADDING_SIZE)) < 0)
@@ -278,7 +274,7 @@ int av_probe_input_buffer2(AVIOContext *pb, const AVInputFormat **fmt,
             ret   = 0;          /* error was end of file, nothing read */
         }
         buf_offset += ret;
-        if (buf_offset < (int)offset)
+        if (buf_offset < offset)
             continue;
         pd.buf_size = buf_offset - offset;
         pd.buf = &buf[offset];

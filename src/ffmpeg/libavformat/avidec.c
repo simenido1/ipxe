@@ -88,7 +88,7 @@ typedef struct AVIContext {
 
 
 static const AVOption options[] = {
-    { "use_odml", "use odml index", offsetof(AVIContext, use_odml), AV_OPT_TYPE_BOOL, {.i64 = 1}, -1, 1, AV_OPT_FLAG_DECODING_PARAM, ""},
+    { "use_odml", "use odml index", offsetof(AVIContext, use_odml), AV_OPT_TYPE_BOOL, {.i64 = 1}, -1, 1, AV_OPT_FLAG_DECODING_PARAM},
     { NULL },
 };
 
@@ -144,7 +144,7 @@ static inline int get_duration(AVIStream *ast, int len)
 static int get_riff(AVFormatContext *s, AVIOContext *pb)
 {
     AVIContext *avi = s->priv_data;
-    unsigned char header[8] = {0};
+    char header[8] = {0};
     int i;
 
     /* check RIFF header */
@@ -194,7 +194,7 @@ static int read_odml_index(AVFormatContext *s, int64_t frame_num)
             base,
             frame_num);
 
-    if (stream_id >= (int)(s->nb_streams) || stream_id < 0)
+    if (stream_id >= s->nb_streams || stream_id < 0)
         return AVERROR_INVALIDDATA;
     st  = s->streams[stream_id];
     ast = st->priv_data;
@@ -279,7 +279,7 @@ static int read_odml_index(AVFormatContext *s, int64_t frame_num)
 
 static void clean_index(AVFormatContext *s)
 {
-    unsigned int i;
+    int i;
     int64_t j;
 
     for (i = 0; i < s->nb_streams; i++) {
@@ -311,7 +311,7 @@ static int avi_read_tag(AVFormatContext *s, AVStream *st, uint32_t tag,
 {
     AVIOContext *pb = s->pb;
     char key[5]     = { 0 };
-    unsigned char *value;
+    char *value;
 
     size += (size & 1);
 
@@ -320,7 +320,7 @@ static int avi_read_tag(AVFormatContext *s, AVStream *st, uint32_t tag,
     value = av_malloc(size + 1);
     if (!value)
         return AVERROR(ENOMEM);
-    if (avio_read(pb, value, size) != (int32_t)size) {
+    if (avio_read(pb, value, size) != size) {
         av_freep(&value);
         return AVERROR_INVALIDDATA;
     }
@@ -328,7 +328,7 @@ static int avi_read_tag(AVFormatContext *s, AVStream *st, uint32_t tag,
 
     AV_WL32(key, tag);
 
-    return av_dict_set(st ? &st->metadata : &s->metadata, key, (char *)value,
+    return av_dict_set(st ? &st->metadata : &s->metadata, key, value,
                        AV_DICT_DONT_STRDUP_VAL);
 }
 
@@ -356,13 +356,13 @@ static void avi_metadata_creation_time(AVDictionary **metadata, char *date)
 
 static void avi_read_nikon(AVFormatContext *s, uint64_t end)
 {
-    while (avio_tell(s->pb) < (int64_t)end && !avio_feof(s->pb)) {
+    while (avio_tell(s->pb) < end && !avio_feof(s->pb)) {
         uint32_t tag  = avio_rl32(s->pb);
         uint32_t size = avio_rl32(s->pb);
         switch (tag) {
         case MKTAG('n', 'c', 't', 'g'):  /* Nikon Tags */
         {
-            int64_t tag_end = avio_tell(s->pb) + size;
+            uint64_t tag_end = avio_tell(s->pb) + size;
             while (avio_tell(s->pb) < tag_end && !avio_feof(s->pb)) {
                 uint16_t tag     = avio_rl16(s->pb);
                 uint16_t size    = avio_rl16(s->pb);
@@ -370,7 +370,7 @@ static void avi_read_nikon(AVFormatContext *s, uint64_t end)
                 char buffer[64]  = { 0 };
                 uint64_t remaining = tag_end - avio_tell(s->pb);
                 size = FFMIN(size, remaining);
-                size -= avio_read(s->pb, (unsigned char *)buffer,
+                size -= avio_read(s->pb, buffer,
                                   FFMIN(size, sizeof(buffer) - 1));
                 switch (tag) {
                 case 0x03:
@@ -439,8 +439,7 @@ static int avi_extract_stream_metadata(AVFormatContext *s, AVStream *st)
 static int calculate_bitrate(AVFormatContext *s)
 {
     AVIContext *avi = s->priv_data;
-    unsigned int i;
-    int j;
+    int i, j;
     int64_t lensum = 0;
     int64_t maxpos = 0;
 
@@ -551,7 +550,7 @@ static int avi_read_header(AVFormatContext *s)
             size += (size & 1);
             size -= avio_read(pb, date, FFMIN(size, sizeof(date) - 1));
             avio_skip(pb, size);
-            avi_metadata_creation_time(&s->metadata, (char *)date);
+            avi_metadata_creation_time(&s->metadata, date);
             break;
         }
         case MKTAG('d', 'm', 'l', 'h'):
@@ -560,11 +559,9 @@ static int avi_read_header(AVFormatContext *s)
             break;
         case MKTAG('a', 'm', 'v', 'h'):
             amv_file_format = 1;
-            __attribute__(( fallthrough ));
         case MKTAG('a', 'v', 'i', 'h'):
             /* AVI header */
             /* using frame_period is bad idea */
-            // if (tag == MKTAG('a', 'm', 'v', 'h')) amv_file_format = 1;
             frame_period = avio_rl32(pb);
             avio_rl32(pb); /* max. bytes per second */
             avio_rl32(pb);
@@ -589,7 +586,7 @@ static int avi_read_header(AVFormatContext *s)
                 break;
             } else {
                 stream_index++;
-                st = avformat_new_stream(s);
+                st = avformat_new_stream(s, NULL);
                 if (!st)
                     return AVERROR(ENOMEM);
 
@@ -742,7 +739,7 @@ static int avi_read_header(AVFormatContext *s)
             if (!size && (codec_type == AVMEDIA_TYPE_AUDIO ||
                           codec_type == AVMEDIA_TYPE_VIDEO))
                 break;
-            if (stream_index >= (int)s->nb_streams || avi->dv_demux) {
+            if (stream_index >= (unsigned)s->nb_streams || avi->dv_demux) {
                 avio_skip(pb, size);
             } else {
                 uint64_t cur_pos = avio_tell(pb);
@@ -856,7 +853,7 @@ static int avi_read_header(AVFormatContext *s)
                         st->codecpar->codec_id = AV_CODEC_ID_MJPEG;
 
                     if (st->codecpar->codec_tag == 0 && st->codecpar->height > 0 &&
-                        st->codecpar->extradata_size < (int)(1U << 30)) {
+                        st->codecpar->extradata_size < 1U << 30) {
                         st->codecpar->extradata_size += 9;
                         if ((ret = av_reallocp(&st->codecpar->extradata,
                                                st->codecpar->extradata_size +
@@ -920,9 +917,9 @@ static int avi_read_header(AVFormatContext *s)
                         av_log(s, AV_LOG_DEBUG, "overriding invalid dshow_block_align of %d\n", ast->dshow_block_align);
                         ast->dshow_block_align = 0;
                     }
-                    if ((st->codecpar->codec_id == AV_CODEC_ID_AAC && ast->dshow_block_align == 1024 && ast->sample_size == 1024) ||
-                       (st->codecpar->codec_id == AV_CODEC_ID_AAC && ast->dshow_block_align == 4096 && ast->sample_size == 4096) ||
-                       (st->codecpar->codec_id == AV_CODEC_ID_MP3 && ast->dshow_block_align == 1152 && ast->sample_size == 1152)) {
+                    if (st->codecpar->codec_id == AV_CODEC_ID_AAC && ast->dshow_block_align == 1024 && ast->sample_size == 1024 ||
+                       st->codecpar->codec_id == AV_CODEC_ID_AAC && ast->dshow_block_align == 4096 && ast->sample_size == 4096 ||
+                       st->codecpar->codec_id == AV_CODEC_ID_MP3 && ast->dshow_block_align == 1152 && ast->sample_size == 1152) {
                         av_log(s, AV_LOG_DEBUG, "overriding sample_size\n");
                         ast->sample_size = 0;
                     }
@@ -942,7 +939,7 @@ static int avi_read_header(AVFormatContext *s)
             }
             break;
         case MKTAG('s', 't', 'r', 'd'):
-            if (stream_index >= (int)s->nb_streams
+            if (stream_index >= (unsigned)s->nb_streams
                 || s->streams[stream_index]->codecpar->extradata_size
                 || s->streams[stream_index]->codecpar->codec_tag == MKTAG('H','2','6','4')) {
                 avio_skip(pb, size);
@@ -979,7 +976,7 @@ static int avi_read_header(AVFormatContext *s)
             avio_seek(pb, pos + size, SEEK_SET);
             break;
         case MKTAG('v', 'p', 'r', 'p'):
-            if (stream_index < (int)s->nb_streams && size > 9 * 4) {
+            if (stream_index < (unsigned)s->nb_streams && size > 9 * 4) {
                 AVRational active, active_aspect;
 
                 st = s->streams[stream_index];
@@ -1021,7 +1018,6 @@ static int avi_read_header(AVFormatContext *s)
                     return ret;
                 break;
             }
-            __attribute__((fallthrough));
         default:
             if (size > 1000000) {
                 av_log(s, AV_LOG_ERROR,
@@ -1035,7 +1031,6 @@ static int avi_read_header(AVFormatContext *s)
                 avi->movi_end  = avi->fsize;
                 goto end_of_header;
             }
-            __attribute__((fallthrough));
         /* Do not fail for very large idx1 tags */
         case MKTAG('i', 'd', 'x', '1'):
             /* skip tag */
@@ -1047,7 +1042,7 @@ static int avi_read_header(AVFormatContext *s)
 
 end_of_header:
     /* check stream number */
-    if (stream_index != (int)(s->nb_streams - 1))
+    if (stream_index != s->nb_streams - 1)
         return AVERROR_INVALIDDATA;
 
     if (!avi->index_loaded && (pb->seekable & AVIO_SEEKABLE_NORMAL))
@@ -1062,14 +1057,14 @@ end_of_header:
 
     dict_entry = av_dict_get(s->metadata, "ISFT", NULL, 0);
     if (dict_entry && !strcmp(dict_entry->value, "PotEncoder"))
-        for (i = 0; i < (int)s->nb_streams; i++) {
+        for (i = 0; i < s->nb_streams; i++) {
             AVStream *st = s->streams[i];
             if (   st->codecpar->codec_id == AV_CODEC_ID_MPEG1VIDEO
                 || st->codecpar->codec_id == AV_CODEC_ID_MPEG2VIDEO)
                 ffstream(st)->need_parsing = AVSTREAM_PARSE_FULL;
         }
 
-    for (i = 0; i < (int)s->nb_streams; i++) {
+    for (i = 0; i < s->nb_streams; i++) {
         AVStream *st = s->streams[i];
         if (ffstream(st)->nb_index_entries)
             break;
@@ -1078,7 +1073,7 @@ end_of_header:
     // a mis-detection.
     if (avi->dv_demux)
         avi->non_interleaved = 0;
-    if (i == (int)s->nb_streams && avi->non_interleaved) {
+    if (i == s->nb_streams && avi->non_interleaved) {
         av_log(s, AV_LOG_WARNING,
                "Non-interleaved AVI without index, switching to interleaved\n");
         avi->non_interleaved = 0;
@@ -1099,7 +1094,7 @@ static int read_gab2_sub(AVFormatContext *s, AVStream *st, AVPacket *pkt)
 {
     if (pkt->size >= 7 &&
         pkt->size < INT_MAX - AVPROBE_PADDING_SIZE &&
-        !strcmp((char *)pkt->data, "GAB2") && AV_RL16(pkt->data + 5) == 2) {
+        !strcmp(pkt->data, "GAB2") && AV_RL16(pkt->data + 5) == 2) {
         uint8_t desc[256];
         int score      = AVPROBE_SCORE_EXTENSION, ret;
         AVIStream *ast = st->priv_data;
@@ -1116,13 +1111,13 @@ static int read_gab2_sub(AVFormatContext *s, AVStream *st, AVPacket *pkt)
 
         desc_len = avio_rl32(pb);
 
-        if ((int)desc_len > pb->buf_end - pb->buf_ptr)
+        if (desc_len > pb->buf_end - pb->buf_ptr)
             goto error;
 
-        ret = avio_get_str16le(pb, desc_len, (char *)desc, sizeof(desc));
+        ret = avio_get_str16le(pb, desc_len, desc, sizeof(desc));
         avio_skip(pb, desc_len - ret);
         if (*desc)
-            av_dict_set(&st->metadata, "title", (char *)desc, 0);
+            av_dict_set(&st->metadata, "title", desc, 0);
 
         avio_rl16(pb);   /* flags? */
         avio_rl32(pb);   /* data size */
@@ -1179,7 +1174,7 @@ static AVStream *get_subtitle_pkt(AVFormatContext *s, AVStream *next_st,
     AVIStream *ast, *next_ast = next_st->priv_data;
     int64_t ts, next_ts, ts_min = INT64_MAX;
     AVStream *st, *sub_st = NULL;
-    unsigned int i;
+    int i;
 
     next_ts = av_rescale_q(next_ast->frame_offset, next_st->time_base,
                            AV_TIME_BASE_Q);
@@ -1244,11 +1239,11 @@ start_sync:
         n = get_stream_idx(d + 2);
         ff_tlog(s, "%X %X %X %X %X %X %X %X %"PRId64" %u %d\n",
                 d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], i, size, n);
-        if (i*(avi->io_fsize>0) + (uint64_t)size - avi->fsize > 0 || d[0] > 127)
+        if (i*(avi->io_fsize>0) + (uint64_t)size > avi->fsize || d[0] > 127)
             continue;
 
         // parse ix##
-        if ((d[0] == 'i' && d[1] == 'x' && n < (int)s->nb_streams) ||
+        if ((d[0] == 'i' && d[1] == 'x' && n < s->nb_streams) ||
             // parse JUNK
             (d[0] == 'J' && d[1] == 'U' && d[2] == 'N' && d[3] == 'K') ||
             (d[0] == 'i' && d[1] == 'd' && d[2] == 'x' && d[3] == '1') ||
@@ -1266,16 +1261,16 @@ start_sync:
         n = get_stream_idx(d);
 
         if (!((i - avi->last_pkt_pos) & 1) &&
-            get_stream_idx(d + 1) < (int)s->nb_streams)
+            get_stream_idx(d + 1) < s->nb_streams)
             continue;
 
         // detect ##ix chunk and skip
-        if (d[2] == 'i' && d[3] == 'x' && n < (int)s->nb_streams) {
+        if (d[2] == 'i' && d[3] == 'x' && n < s->nb_streams) {
             avio_skip(pb, size);
             goto start_sync;
         }
 
-        if (d[2] == 'w' && d[3] == 'c' && n < (int)s->nb_streams) {
+        if (d[2] == 'w' && d[3] == 'c' && n < s->nb_streams) {
             avio_skip(pb, 16 * 3 + 8);
             goto start_sync;
         }
@@ -1284,7 +1279,7 @@ start_sync:
             continue;
 
         // parse ##dc/##wb
-        if (n < (int)s->nb_streams) {
+        if (n < s->nb_streams) {
             AVStream *st;
             AVIStream *ast;
             st  = s->streams[n];
@@ -1304,7 +1299,7 @@ start_sync:
                    && st ->codecpar->codec_type == AVMEDIA_TYPE_VIDEO
                    && st1->codecpar->codec_type == AVMEDIA_TYPE_AUDIO
                    && ast->prefix == 'd'*256+'c'
-                   && ((int)(d[2]*256+d[3]) == ast1->prefix || !ast1->prefix_count)
+                   && (d[2]*256+d[3] == ast1->prefix || !ast1->prefix_count)
                   ) {
                     n   = 1;
                     st  = st1;
@@ -1328,12 +1323,12 @@ start_sync:
                 goto start_sync;
             } else if (((ast->prefix_count < 5 || sync + 9 > i) &&
                         d[2] < 128 && d[3] < 128) ||
-                       (int)(d[2] * 256 + d[3]) == ast->prefix /* ||
+                       d[2] * 256 + d[3] == ast->prefix /* ||
                        (d[2] == 'd' && d[3] == 'c') ||
                        (d[2] == 'w' && d[3] == 'b') */) {
                 if (exit_early)
                     return 0;
-                if ((int)(d[2] * 256 + d[3]) == ast->prefix)
+                if (d[2] * 256 + d[3] == ast->prefix)
                     ast->prefix_count++;
                 else {
                     ast->prefix       = d[2] * 256 + d[3];
@@ -1358,7 +1353,7 @@ start_sync:
 
                 if (size) {
                     FFStream *const sti = ffstream(st);
-                    int64_t pos = avio_tell(pb) - 8;
+                    uint64_t pos = avio_tell(pb) - 8;
                     if (!sti->index_entries || !sti->nb_index_entries ||
                         sti->index_entries[sti->nb_index_entries - 1].pos < pos) {
                         av_add_index_entry(st, pos, ast->frame_offset, size,
@@ -1385,7 +1380,7 @@ static int ni_prepare_read(AVFormatContext *s)
     int64_t best_ts = INT64_MAX;
     int i;
 
-    for (i = 0; i < (int)s->nb_streams; i++) {
+    for (i = 0; i < s->nb_streams; i++) {
         AVStream *st   = s->streams[i];
         FFStream *const sti = ffstream(st);
         AVIStream *ast = st->priv_data;
@@ -1495,7 +1490,7 @@ resync:
             return err;
         size = err;
 
-        if (ast->has_pal && pkt->size < INT_MAX / 2 && !dv_demux) {
+        if (ast->has_pal && pkt->size < (unsigned)INT_MAX / 2 && !dv_demux) {
             uint8_t *pal;
             pal = av_packet_new_side_data(pkt,
                                           AV_PKT_DATA_PALETTE,
@@ -1685,7 +1680,7 @@ static int avi_read_idx1(AVFormatContext *s, int size)
 static int check_stream_max_drift(AVFormatContext *s)
 {
     int64_t min_pos, pos;
-    unsigned int i;
+    int i;
     int *idx = av_calloc(s->nb_streams, sizeof(*idx));
     if (!idx)
         return AVERROR(ENOMEM);
@@ -1747,7 +1742,7 @@ static int guess_ni_flag(AVFormatContext *s)
     int64_t first_end  = INT64_MAX;
     int64_t oldpos     = avio_tell(s->pb);
 
-    for (i = 0; i < (int)s->nb_streams; i++) {
+    for (i = 0; i < s->nb_streams; i++) {
         AVStream *st = s->streams[i];
         FFStream *const sti = ffstream(st);
         int n = sti->nb_index_entries;
@@ -1766,7 +1761,7 @@ static int guess_ni_flag(AVFormatContext *s)
             size = avio_rl32(s->pb);
             if (get_stream_idx(tag) == i && pos + size > sti->index_entries[1].pos)
                 last_start = INT64_MAX;
-            if (get_stream_idx(tag) == i && (int)size == sti->index_entries[0].size + 8)
+            if (get_stream_idx(tag) == i && size == sti->index_entries[0].size + 8)
                 last_start = INT64_MAX;
         }
 
@@ -1898,7 +1893,7 @@ static int avi_read_seek(AVFormatContext *s, int stream_index,
     }
 
     pos_min = pos;
-    for (i = 0; i < (int)s->nb_streams; i++) {
+    for (i = 0; i < s->nb_streams; i++) {
         AVStream *st2   = s->streams[i];
         FFStream *const sti2 = ffstream(st2);
         AVIStream *ast2 = st2->priv_data;
@@ -1928,7 +1923,7 @@ static int avi_read_seek(AVFormatContext *s, int stream_index,
         ast2->seek_pos = sti2->index_entries[index].pos;
         pos_min = FFMIN(pos_min,ast2->seek_pos);
     }
-    for (i = 0; i < (int)s->nb_streams; i++) {
+    for (i = 0; i < s->nb_streams; i++) {
         AVStream *st2 = s->streams[i];
         FFStream *const sti2 = ffstream(st2);
         AVIStream *ast2 = st2->priv_data;
@@ -1962,7 +1957,7 @@ static int avi_read_close(AVFormatContext *s)
     int i;
     AVIContext *avi = s->priv_data;
 
-    for (i = 0; i < (int)s->nb_streams; i++) {
+    for (i = 0; i < s->nb_streams; i++) {
         AVStream *st   = s->streams[i];
         AVIStream *ast = st->priv_data;
         if (ast) {

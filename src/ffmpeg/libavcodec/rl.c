@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include "libavutil/attributes.h"
-//#include "libavutil/avassert.h"
+#include "libavutil/avassert.h"
 
 #include "rl.h"
 

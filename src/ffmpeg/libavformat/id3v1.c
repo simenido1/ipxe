@@ -229,7 +229,7 @@ static void get_string(AVFormatContext *s, const char *key,
         c = buf[i];
         if (c == '\0')
             break;
-        if ((q - str) >= (int)sizeof(str) - 1)
+        if ((q - str) >= sizeof(str) - 1)
             break;
         if (c == ' ') {
             if (!first_free_space)

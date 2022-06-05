@@ -800,7 +800,7 @@ static void decode_band_structure(GetBitContext *gbc, int blk, int eac3,
     if (!blk)
         memcpy(band_struct, default_band_struct, band_struct_size);
 
-    av_assert0(band_struct_size >= start_subband + n_subbands);
+  //avassert0(band_struct_size >= start_subband + n_subbands);
 
     band_struct += start_subband + 1;
 
@@ -1779,7 +1779,7 @@ skip:
 
     for (ch = 0; ch < avctx->ch_layout.nb_channels; ch++) {
         int map = extended_channel_map[ch];
-        av_assert0(ch>=AV_NUM_DATA_POINTERS || frame->extended_data[ch] == frame->data[ch]);
+      //avassert0(ch>=AV_NUM_DATA_POINTERS || frame->extended_data[ch] == frame->data[ch]);
         memcpy((SHORTFLOAT *)frame->extended_data[ch],
                s->output_buffer[map],
                s->num_blocks * AC3_BLOCK_SIZE * sizeof(SHORTFLOAT));

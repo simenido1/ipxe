@@ -352,7 +352,7 @@ static enum AVPixelFormat find_pix_fmt(const PixelFormatTag *tags,
 enum AVPixelFormat avpriv_pix_fmt_find(enum PixelFormatTagLists list,
                                        unsigned fourcc)
 {
-    const PixelFormatTag *tags = NULL;
+    const PixelFormatTag *tags;
 
     switch (list) {
     case PIX_FMT_LIST_RAW:

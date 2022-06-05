@@ -37,7 +37,7 @@
 
 
 /* error handling */
-#if 1 > 0
+#if 33 > 0 //#if EDOM > 0
 #define AVERROR(e) (-(e))   ///< Returns a negative error code from a POSIX error code, to return from library functions.
 #define AVUNERROR(e) (-(e)) ///< Returns a POSIX error code from a library function error return value.
 #else

@@ -349,7 +349,7 @@ static void alloc_rbsp_buffer(H2645RBSP *rbsp, unsigned int size, int use_ref)
         goto fail;
     size += AV_INPUT_BUFFER_PADDING_SIZE;
 
-    if (rbsp->rbsp_buffer_alloc_size >= (int)size &&
+    if (rbsp->rbsp_buffer_alloc_size >= size &&
         (!rbsp->rbsp_buffer_ref || av_buffer_is_writable(rbsp->rbsp_buffer_ref))) {
         //av_assert0(rbsp->rbsp_buffer);
         memset(rbsp->rbsp_buffer + min_size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
@@ -455,7 +455,7 @@ int ff_h2645_packet_split(H2645Packet *pkt, const uint8_t *buf, int length,
             int new_size = pkt->nals_allocated + 1;
             void *tmp;
 
-            if (new_size >= INT_MAX / (int)sizeof(*pkt->nals))
+            if (new_size >= INT_MAX / sizeof(*pkt->nals))
                 return AVERROR(ENOMEM);
 
             tmp = av_fast_realloc(pkt->nals, &pkt->nal_buffer_size, new_size * sizeof(*pkt->nals));

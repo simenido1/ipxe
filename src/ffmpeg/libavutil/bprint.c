@@ -106,7 +106,7 @@ void av_bprintf(AVBPrint *buf, const char *fmt, ...)
         va_end(vl);
         if (extra_len <= 0)
             return;
-        if (extra_len < (int)room)
+        if (extra_len < room)
             break;
         if (av_bprint_alloc(buf, extra_len))
             break;
@@ -129,7 +129,7 @@ void av_vbprintf(AVBPrint *buf, const char *fmt, va_list vl_arg)
         va_end(vl);
         if (extra_len <= 0)
             return;
-        if (extra_len < (int)room)
+        if (extra_len < room)
             break;
         if (av_bprint_alloc(buf, extra_len))
             break;
@@ -178,7 +178,6 @@ void av_bprint_append_data(AVBPrint *buf, const char *data, unsigned size)
 //     unsigned room;
 //     size_t l;
 
-//     (void)tm;
 //     if (!*fmt)
 //         return;
 //     while (1) {
@@ -222,7 +221,7 @@ void av_bprint_get_buffer(AVBPrint *buf, unsigned size,
     if (size > av_bprint_room(buf))
         av_bprint_alloc(buf, size);
     *actual_size = av_bprint_room(buf);
-    *mem = *actual_size ? (unsigned char *)(buf->str + buf->len) : NULL;
+    *mem = *actual_size ? buf->str + buf->len : NULL;
 }
 
 void av_bprint_clear(AVBPrint *buf)

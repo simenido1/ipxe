@@ -763,8 +763,8 @@ static av_cold void init_uni_h263_rl_tab(const RLTable *rl, uint8_t *len_tab)
 {
     int slevel, run, last;
 
-    av_assert0(MAX_LEVEL >= 64);
-    av_assert0(MAX_RUN   >= 63);
+  //avassert0(MAX_LEVEL >= 64);
+  //avassert0(MAX_RUN   >= 63);
 
     for(slevel=-64; slevel<64; slevel++){
         if(slevel==0) continue;

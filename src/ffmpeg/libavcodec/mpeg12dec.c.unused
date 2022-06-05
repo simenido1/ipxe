@@ -901,7 +901,7 @@ static int mpeg_decode_mb(MpegEncContext *s, int16_t block[12][64])
                         }
                     }
                 } else {
-                    av_assert0(!s->progressive_sequence);
+                  //avassert0(!s->progressive_sequence);
                     mb_type |= MB_TYPE_16x16 | MB_TYPE_INTERLACED;
                     for (i = 0; i < 2; i++) {
                         if (USES_LIST(mb_type, i)) {
@@ -1291,7 +1291,7 @@ static int mpeg_decode_postinit(AVCodecContext *avctx)
             case 1: avctx->chroma_sample_location = AVCHROMA_LOC_LEFT; break;
             case 2:
             case 3: avctx->chroma_sample_location = AVCHROMA_LOC_TOPLEFT; break;
-            default: av_assert0(0);
+            default//avassert0(0);
             }
         } // MPEG-2
 
@@ -1695,7 +1695,7 @@ static int mpeg_decode_slice(MpegEncContext *s, int mb_y,
     s->resync_mb_x =
     s->resync_mb_y = -1;
 
-    av_assert0(mb_y < s->mb_height);
+  //avassert0(mb_y < s->mb_height);
 
     init_get_bits(&s->gb, *buf, buf_size * 8);
     if (s->codec_id != AV_CODEC_ID_MPEG1VIDEO && s->mb_height > 2800/16)
@@ -2451,7 +2451,7 @@ static int decode_chunks(AVCodecContext *avctx, AVFrame *picture,
                     (avctx->active_thread_type & FF_THREAD_SLICE) &&
                     !avctx->hwaccel) {
                     int i;
-                    av_assert0(avctx->thread_count > 1);
+                  //avassert0(avctx->thread_count > 1);
 
                     avctx->execute(avctx, slice_decode_thread,
                                    &s2->thread_context[0], NULL,
@@ -2723,7 +2723,7 @@ static int decode_chunks(AVCodecContext *avctx, AVFrame *picture,
                     int threshold = (s2->mb_height * s->slice_count +
                                      s2->slice_context_count / 2) /
                                     s2->slice_context_count;
-                    av_assert0(avctx->thread_count > 1);
+                  //avassert0(avctx->thread_count > 1);
                     if (threshold <= mb_y) {
                         MpegEncContext *thread_context = s2->thread_context[s->slice_count];
 

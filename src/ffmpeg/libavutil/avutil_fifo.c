@@ -29,7 +29,6 @@
 #include "macros.h"
 #include "mem.h"
 #include "internal.h"
-
 // by default the FIFO can be auto-grown to 1MB
 #define AUTO_GROW_DEFAULT_BYTES (1024 * 1024)
 

@@ -386,13 +386,13 @@ void av_log_default_callback(void* ptr, int level, const char* fmt, va_list vl)
         count = 0;
     }
     strcpy(prev, line);
-    sanitize((uint8_t *)part[0].str);
+    sanitize(part[0].str);
     colored_fputs(type[0], 0, part[0].str);
-    sanitize((uint8_t *)part[1].str);
+    sanitize(part[1].str);
     colored_fputs(type[1], 0, part[1].str);
-    sanitize((uint8_t *)part[2].str);
+    sanitize(part[2].str);
     colored_fputs(av_clip(level >> 3, 0, NB_LEVELS - 1), tint >> 8, part[2].str);
-    sanitize((uint8_t *)part[3].str);
+    sanitize(part[3].str);
     colored_fputs(av_clip(level >> 3, 0, NB_LEVELS - 1), tint >> 8, part[3].str);
 
 #if CONFIG_VALGRIND_BACKTRACE

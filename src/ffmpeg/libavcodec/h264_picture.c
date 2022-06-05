@@ -25,15 +25,14 @@
  * @author Michael Niedermayer <michaelni@gmx.at>
  */
 
-//#include "libavutil/avassert.h"
+#include "libavutil/avassert.h"
 #include "error_resilience.h"
 #include "avcodec.h"
 #include "h264dec.h"
 #include "mpegutils.h"
 #include "thread.h"
 #include "threadframe.h"
-#include <string.h>
-
+#include "libavutil/internal.h"
 void ff_h264_unref_picture(H264Context *h, H264Picture *pic)
 {
     int off = offsetof(H264Picture, f_grain) + sizeof(pic->f_grain);
@@ -219,7 +218,6 @@ void ff_h264_set_erpic(ERPicture *dst, H264Picture *src)
 
 int ff_h264_field_end(H264Context *h, H264SliceContext *sl, int in_setup)
 {
-    (void)sl;
     AVCodecContext *const avctx = h->avctx;
     H264Picture *cur = h->cur_pic_ptr;
     int err = 0;

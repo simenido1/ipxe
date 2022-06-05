@@ -56,11 +56,10 @@ typedef struct FramePool {
 
 static void frame_pool_free(void *opaque, uint8_t *data)
 {
-    (void)opaque;
     FramePool *pool = (FramePool*)data;
     int i;
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(pool->pools); i++)
+    for (i = 0; i < FF_ARRAY_ELEMS(pool->pools); i++)
         av_buffer_pool_uninit(&pool->pools[i]);
 
     av_freep(&data);
@@ -89,9 +88,7 @@ static int update_frame_pool(AVCodecContext *avctx, AVFrame *frame)
     FramePool *pool = avctx->internal->pool ?
                       (FramePool*)avctx->internal->pool->data : NULL;
     AVBufferRef *pool_buf;
-    int i, ret;
-    int ch = 0;
-    int planes = 0;
+    int i, ret, ch, planes;
 
     if (avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
         int planar = av_sample_fmt_is_planar(frame->format);
@@ -252,6 +249,7 @@ fail:
 
 static int video_get_buffer(AVCodecContext *s, AVFrame *pic)
 {
+    //printf("get_buffer 252\n");
     FramePool *pool = (FramePool*)s->internal->pool->data;
     const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(pic->format);
     int i;
@@ -275,8 +273,10 @@ static int video_get_buffer(AVCodecContext *s, AVFrame *pic)
         pic->linesize[i] = pool->linesize[i];
 
         pic->buf[i] = av_buffer_pool_get(pool->pools[i]);
-        if (!pic->buf[i])
+        if (!pic->buf[i]) {
+            //printf("get_buffer 277\n");
             goto fail;
+        }
 
         pic->data[i] = pic->buf[i]->data;
     }
@@ -297,7 +297,7 @@ fail:
 int avcodec_default_get_buffer2(AVCodecContext *avctx, AVFrame *frame, int flags)
 {
     int ret;
-    (void)flags;
+    //printf("get_buffer 297\n");
     if (avctx->hw_frames_ctx) {
         ret = av_hwframe_get_buffer(avctx->hw_frames_ctx, frame, 0);
         frame->width  = avctx->coded_width;
@@ -305,8 +305,10 @@ int avcodec_default_get_buffer2(AVCodecContext *avctx, AVFrame *frame, int flags
         return ret;
     }
 
-    if ((ret = update_frame_pool(avctx, frame)) < 0)
+    if ((ret = update_frame_pool(avctx, frame)) < 0) {
+        //printf("get_buffer 306, ret=%d\n");
         return ret;
+    }
 
     switch (avctx->codec_type) {
     case AVMEDIA_TYPE_VIDEO:

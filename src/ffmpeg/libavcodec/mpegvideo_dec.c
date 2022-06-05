@@ -33,7 +33,6 @@
 #include "mpegvideo.h"
 #include "mpegvideodec.h"
 #include "threadframe.h"
-#include <string.h>
 
 void ff_mpv_decode_init(MpegEncContext *s, AVCodecContext *avctx)
 {
@@ -155,7 +154,7 @@ do {\
 
     if (s1->bitstream_buffer) {
         if (s1->bitstream_buffer_size +
-            AV_INPUT_BUFFER_PADDING_SIZE > (int)s->allocated_bitstream_buffer_size) {
+            AV_INPUT_BUFFER_PADDING_SIZE > s->allocated_bitstream_buffer_size) {
             av_fast_malloc(&s->bitstream_buffer,
                            &s->allocated_bitstream_buffer_size,
                            s1->allocated_bitstream_buffer_size);
@@ -172,7 +171,7 @@ do {\
     }
 
     // linesize-dependent scratch buffer allocation
-    if (!s->sc.edge_emu_buffer) {
+    if (!s->sc.edge_emu_buffer)
         if (s1->linesize) {
             if (ff_mpeg_framesize_alloc(s->avctx, &s->me,
                                         &s->sc, s1->linesize) < 0) {
@@ -184,7 +183,6 @@ do {\
             av_log(s->avctx, AV_LOG_ERROR, "Context scratch buffers could not "
                    "be allocated due to unknown size.\n");
         }
-    }
 
     // MPEG-2/interlacing info
     memcpy(&s->progressive_sequence, &s1->progressive_sequence,
@@ -335,8 +333,10 @@ int ff_mpv_frame_start(MpegEncContext *s, AVCodecContext *avctx)
 
     pic->f->coded_picture_number = s->coded_picture_number++;
 
-    if (alloc_picture(s, pic) < 0)
+    if (alloc_picture(s, pic) < 0) {
+        printf("mpegvideo_dec 337\n");
         return -1;
+    }
 
     s->current_picture_ptr = pic;
     // FIXME use only the vars from current_pic
@@ -356,7 +356,10 @@ int ff_mpv_frame_start(MpegEncContext *s, AVCodecContext *avctx)
 
     if ((ret = ff_mpeg_ref_picture(s->avctx, &s->current_picture,
                                    s->current_picture_ptr)) < 0)
+                                   {
+        printf("mpegvideo_dec 360, ret=%d\n", ret);
         return ret;
+                                   }
 
     if (s->pict_type != AV_PICTURE_TYPE_B) {
         s->last_picture_ptr = s->next_picture_ptr;
@@ -395,6 +398,7 @@ int ff_mpv_frame_start(MpegEncContext *s, AVCodecContext *avctx)
         s->last_picture_ptr->f->pict_type = AV_PICTURE_TYPE_P;
 
         if (alloc_picture(s, s->last_picture_ptr) < 0) {
+            printf("mpegvideo_dec 401\n");
             s->last_picture_ptr = NULL;
             return -1;
         }
@@ -525,8 +529,8 @@ int ff_mpv_export_qp_table(MpegEncContext *s, AVFrame *f, Picture *p, int qp_typ
     if (!par)
         return AVERROR(ENOMEM);
 
-    for (int y = 0; y < p->alloc_mb_height; y++)
-        for (int x = 0; x < p->alloc_mb_width; x++) {
+    for (unsigned y = 0; y < p->alloc_mb_height; y++)
+        for (unsigned x = 0; x < p->alloc_mb_width; x++) {
             const unsigned int block_idx = y * p->alloc_mb_width + x;
             const unsigned int     mb_xy = y * p->alloc_mb_stride + x;
             AVVideoBlockParams *const b = av_video_enc_params_block(par, block_idx);

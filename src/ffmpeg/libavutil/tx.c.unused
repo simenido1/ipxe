@@ -34,7 +34,7 @@ static av_always_inline int mulinv(int n, int m)
     for (int x = 1; x < m; x++)
         if (((n * x) % m) == 1)
             return x;
-    av_assert0(0); /* Never reached */
+  //avassert0(0); /* Never reached */
     return 0;
 }
 
@@ -220,8 +220,8 @@ int ff_tx_gen_split_radix_parity_revtab(AVTXContext *s, int invert_lookup,
     if (len < basis)
         return AVERROR(EINVAL);
 
-    av_assert0(!dual_stride || !(dual_stride & (dual_stride - 1)));
-    av_assert0(dual_stride <= basis);
+  //avassert0(!dual_stride || !(dual_stride & (dual_stride - 1)));
+  //avassert0(dual_stride <= basis);
     parity_revtab_generator(s->map, len, inv, 0, 0, 0, len,
                             basis, dual_stride, invert_lookup);
 

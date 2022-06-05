@@ -85,7 +85,7 @@ static const char *const hw_type_names[] = {
 enum AVHWDeviceType av_hwdevice_find_type_by_name(const char *name)
 {
     int type;
-    for (type = 0; type < (int)FF_ARRAY_ELEMS(hw_type_names); type++) {
+    for (type = 0; type < FF_ARRAY_ELEMS(hw_type_names); type++) {
         if (hw_type_names[type] && !strcmp(hw_type_names[type], name))
             return type;
     }
@@ -125,7 +125,7 @@ static const AVClass hwdevice_ctx_class = {
 static void hwdevice_ctx_free(void *opaque, uint8_t *data)
 {
     AVHWDeviceContext *ctx = (AVHWDeviceContext*)data;
-    (void)opaque;
+
     /* uninit might still want access the hw context and the user
      * free() callback might destroy it, so uninit has to be called first */
     if (ctx->internal->hw_type->device_uninit)
@@ -227,7 +227,7 @@ static const AVClass hwframe_ctx_class = {
 static void hwframe_ctx_free(void *opaque, uint8_t *data)
 {
     AVHWFramesContext *ctx = (AVHWFramesContext*)data;
-    (void)opaque;
+
     if (ctx->internal->pool_internal)
         av_buffer_pool_uninit(&ctx->internal->pool_internal);
 
@@ -390,7 +390,7 @@ int av_hwframe_transfer_get_formats(AVBufferRef *hwframe_ref,
                                     enum AVPixelFormat **formats, int flags)
 {
     AVHWFramesContext *ctx = (AVHWFramesContext*)hwframe_ref->data;
-    (void)flags;
+
     if (!ctx->internal->hw_type->transfer_get_formats)
         return AVERROR(ENOSYS);
 
@@ -506,7 +506,7 @@ int av_hwframe_get_buffer(AVBufferRef *hwframe_ref, AVFrame *frame, int flags)
 {
     AVHWFramesContext *ctx = (AVHWFramesContext*)hwframe_ref->data;
     int ret;
-    (void)flags;
+
     if (ctx->internal->source_frames) {
         // This is a derived frame context, so we allocate in the source
         // and map the frame immediately.

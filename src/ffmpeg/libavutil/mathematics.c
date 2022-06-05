@@ -102,12 +102,12 @@ int64_t av_rescale_rnd(int64_t a, int64_t b, int64_t c, enum AVRounding rnd)
         a0  = a0 * b0 + t1a;
         a1  = a1 * b1 + (t1 >> 32) + (a0 < t1a);
         a0 += r;
-        a1 += (int)a0 < r;
+        a1 += a0 < r;
 
         for (i = 63; i >= 0; i--) {
             a1 += a1 + ((a0 >> i) & 1);
             t1 += t1;
-            if (c <= (int)a1) {
+            if (c <= a1) {
                 a1 -= c;
                 t1++;
             }
@@ -160,7 +160,7 @@ int av_compare_ts(int64_t ts_a, AVRational tb_a, int64_t ts_b, AVRational tb_b)
 int64_t av_compare_mod(uint64_t a, uint64_t b, uint64_t mod)
 {
     int64_t c = (a - b) & (mod - 1);
-    if (c > (int)(mod >> 1))
+    if (c > (mod >> 1))
         c -= mod;
     return c;
 }

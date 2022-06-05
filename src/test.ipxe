@@ -1,0 +1,7 @@
+#!ipxe
+
+dhcp
+console --x 1152 --y 864
+#gdbstub udp net0
+#shell
+imgfetch tftp://192.168.0.103/sample.avi && shell

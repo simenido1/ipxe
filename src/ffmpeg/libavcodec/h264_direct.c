@@ -33,7 +33,6 @@
 #include "threadframe.h"
 
 #include <assert.h>
-#include <string.h>
 
 static int get_scale_factor(H264SliceContext *sl,
                             int poc, int poc1, int i)

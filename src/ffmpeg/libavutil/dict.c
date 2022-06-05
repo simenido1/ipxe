@@ -50,7 +50,7 @@ AVDictionaryEntry *av_dict_get(const AVDictionary *m, const char *key,
     else
         i = 0;
 
-    for (; i < (unsigned)m->count; i++) {
+    for (; i < m->count; i++) {
         const char *s = m->elems[i].key;
         if (flags & AV_DICT_MATCH_CASE)
             for (j = 0; s[j] == key[j] && key[j]; j++)
@@ -259,7 +259,7 @@ int av_dict_get_string(const AVDictionary *m, char **buffer,
 // {
 //     time_t seconds = timestamp / 1000000;
 //     struct tm *ptm, tmbuf;
-//     ptm = gmtime_r(&seconds, &tmbuf);
+//     ptm = gmtime(&seconds);
 //     if (ptm) {
 //         char buf[32];
 //         if (!strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", ptm))

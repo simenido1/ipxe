@@ -56,9 +56,9 @@ static void *urlcontext_child_next(void *obj, void *prev)
 #define E AV_OPT_FLAG_ENCODING_PARAM
 #define D AV_OPT_FLAG_DECODING_PARAM
 static const AVOption options[] = {
-    {"protocol_whitelist", "List of protocols that are allowed to be used", OFFSET(protocol_whitelist), AV_OPT_TYPE_STRING, { .str = NULL },  0, 0, D, ""},
-    {"protocol_blacklist", "List of protocols that are not allowed to be used", OFFSET(protocol_blacklist), AV_OPT_TYPE_STRING, { .str = NULL },  0, 0, D, ""},
-    {"rw_timeout", "Timeout for IO operations (in microseconds)", offsetof(URLContext, rw_timeout), AV_OPT_TYPE_INT64, { .i64 = 0 }, 0, INT64_MAX, AV_OPT_FLAG_ENCODING_PARAM | AV_OPT_FLAG_DECODING_PARAM, ""},
+    {"protocol_whitelist", "List of protocols that are allowed to be used", OFFSET(protocol_whitelist), AV_OPT_TYPE_STRING, { .str = NULL },  0, 0, D },
+    {"protocol_blacklist", "List of protocols that are not allowed to be used", OFFSET(protocol_blacklist), AV_OPT_TYPE_STRING, { .str = NULL },  0, 0, D },
+    {"rw_timeout", "Timeout for IO operations (in microseconds)", offsetof(URLContext, rw_timeout), AV_OPT_TYPE_INT64, { .i64 = 0 }, 0, INT64_MAX, AV_OPT_FLAG_ENCODING_PARAM | AV_OPT_FLAG_DECODING_PARAM },
     { NULL }
 };
 
@@ -264,7 +264,7 @@ static const struct URLProtocol *url_find_protocol(const char *filename)
                    FFMIN(proto_len + 1, sizeof(proto_str)));
 
     av_strlcpy(proto_nested, proto_str, sizeof(proto_nested));
-    if ((ptr = strchr(proto_nested, (int)'+')))
+    if ((ptr = strchr(proto_nested, '+')))
         *ptr = '\0';
 
     protocols = ffurl_get_protocols(NULL, NULL);
@@ -309,7 +309,7 @@ int ffurl_open_whitelist(URLContext **puc, const char *filename, int flags,
                          URLContext *parent)
 {
     AVDictionary *tmp_opts = NULL;
-//    AVDictionaryEntry *e;
+    //AVDictionaryEntry *e;
     int ret = ffurl_alloc(puc, filename, flags, int_cb);
     if (ret < 0)
         return ret;

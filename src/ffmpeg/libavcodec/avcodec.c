@@ -23,8 +23,6 @@
  * AVCodecContext functions for libavcodec
  */
 
-//HAVE_THREADS = 0, CONFIG_FRAME_THREAD_ENCODER = 0, so, code, dependent on this values, is not compiled
-
 #include "ffmpeg_config.h"
 #include "libavutil/avassert.h"
 #include "libavutil/avstring.h"
@@ -34,7 +32,6 @@
 #include "libavutil/mem.h"
 #include "libavutil/opt.h"
 #include "libavutil/thread.h"
-#include "libavutil/internal.h"
 #include "avcodec.h"
 #include "bsf.h"
 #include "codec_internal.h"
@@ -44,9 +41,9 @@
 #include "internal.h"
 #include "thread.h"
 #include "version.h"
-#include <string.h>
 
 #include "libavutil/ffversion.h"
+#include "libavutil/internal.h"
 const char av_codec_ffversion[] = "FFmpeg version " FFMPEG_VERSION;
 
 unsigned avcodec_version(void)
@@ -96,18 +93,18 @@ int avcodec_default_execute2(AVCodecContext *c, int (*func)(AVCodecContext *c2, 
     return 0;
 }
 
-//static AVMutex codec_mutex = AV_MUTEX_INITIALIZER;
+static AVMutex codec_mutex = AV_MUTEX_INITIALIZER;
 
 static void lock_avcodec(const FFCodec *codec)
 {
-    if (!(codec->caps_internal & FF_CODEC_CAP_INIT_THREADSAFE) && codec->init) {}
-        //ff_mutex_lock(&codec_mutex);
+    if (!(codec->caps_internal & FF_CODEC_CAP_INIT_THREADSAFE) && codec->init)
+        ff_mutex_lock(&codec_mutex);
 }
 
 static void unlock_avcodec(const FFCodec *codec)
 {
-    if (!(codec->caps_internal & FF_CODEC_CAP_INIT_THREADSAFE) && codec->init) {}
-        //ff_mutex_unlock(&codec_mutex);
+    if (!(codec->caps_internal & FF_CODEC_CAP_INIT_THREADSAFE) && codec->init)
+        ff_mutex_unlock(&codec_mutex);
 }
 
 static int64_t get_bit_rate(AVCodecContext *ctx)
@@ -162,17 +159,15 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
         codec = avctx->codec;
     codec2 = ffcodec(codec);
 
-    if ((avctx->codec_type == AVMEDIA_TYPE_UNKNOWN || avctx->codec_type == codec->type) &&
-        avctx->codec_id == AV_CODEC_ID_NONE) {
-        avctx->codec_type = codec->type;
-        avctx->codec_id   = codec->id;
-    }
-    if (avctx->codec_id != codec->id || (avctx->codec_type != codec->type &&
-                                         avctx->codec_type != AVMEDIA_TYPE_ATTACHMENT)) {
+    if ((avctx->codec_type != AVMEDIA_TYPE_UNKNOWN && avctx->codec_type != codec->type) ||
+        (avctx->codec_id   != AV_CODEC_ID_NONE     && avctx->codec_id   != codec->id)) {
         av_log(avctx, AV_LOG_ERROR, "Codec type or id mismatches\n");
         return AVERROR(EINVAL);
     }
-    avctx->codec = codec;
+
+    avctx->codec_type = codec->type;
+    avctx->codec_id   = codec->id;
+    avctx->codec      = codec;
 
     if (avctx->extradata_size < 0 || avctx->extradata_size >= FF_MAX_EXTRADATA_SIZE)
         return AVERROR(EINVAL);
@@ -186,14 +181,12 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
 
     avci->buffer_frame = av_frame_alloc();
     avci->buffer_pkt = av_packet_alloc();
-    avci->es.in_frame = av_frame_alloc();
     avci->in_pkt = av_packet_alloc();
     avci->last_pkt_props = av_packet_alloc();
     avci->pkt_props = av_fifo_alloc2(1, sizeof(*avci->last_pkt_props),
                                      AV_FIFO_FLAG_AUTO_GROW);
     if (!avci->buffer_frame || !avci->buffer_pkt          ||
-        !avci->es.in_frame  || !avci->in_pkt     ||
-        !avci->last_pkt_props || !avci->pkt_props) {
+        !avci->in_pkt || !avci->last_pkt_props || !avci->pkt_props) {
         ret = AVERROR(ENOMEM);
         goto free_and_end;
     }
@@ -284,7 +277,7 @@ FF_DISABLE_DEPRECATION_WARNINGS
 FF_ENABLE_DEPRECATION_WARNINGS
 #endif
 
-    if (avctx->ch_layout.nb_channels > (int)FF_SANE_NB_CHANNELS) {
+    if (avctx->ch_layout.nb_channels > FF_SANE_NB_CHANNELS) {
         av_log(avctx, AV_LOG_ERROR, "Too many channels: %d\n", avctx->ch_layout.nb_channels);
         ret = AVERROR(EINVAL);
         goto free_and_end;
@@ -322,25 +315,25 @@ FF_ENABLE_DEPRECATION_WARNINGS
     if (ret < 0)
         goto free_and_end;
 
-    // if (!HAVE_THREADS)
-    //     av_log(avctx, AV_LOG_WARNING, "Warning: not compiled with thread support, using thread emulation\n");
+    if (!HAVE_THREADS)
+        av_log(avctx, AV_LOG_WARNING, "Warning: not compiled with thread support, using thread emulation\n");
 
-    // if (CONFIG_FRAME_THREAD_ENCODER && av_codec_is_encoder(avctx->codec)) {  CONFIG_FRAME_THREAD_ENCODER = 0, so no need to compile this code
-    //     ret = ff_frame_thread_encoder_init(avctx);
-    //     if (ret < 0)
-    //         goto free_and_end;
-    // }
+    if (CONFIG_FRAME_THREAD_ENCODER && av_codec_is_encoder(avctx->codec)) {
+        ret = ff_frame_thread_encoder_init(avctx);
+        if (ret < 0)
+            goto free_and_end;
+    }
 
-    // if (HAVE_THREADS
-    //     && !(avci->frame_thread_encoder && (avctx->active_thread_type&FF_THREAD_FRAME))) {
-    //     /* Frame-threaded decoders call FFCodec.init for their child contexts. */
-    //     lock_avcodec(codec2);
-    //     ret = ff_thread_init(avctx);
-    //     unlock_avcodec(codec2);
-    //     if (ret < 0) {
-    //         goto free_and_end;
-    //     }
-    // }
+    if (HAVE_THREADS
+        && !(avci->frame_thread_encoder && (avctx->active_thread_type&FF_THREAD_FRAME))) {
+        /* Frame-threaded decoders call FFCodec.init for their child contexts. */
+        lock_avcodec(codec2);
+        ret = ff_thread_init(avctx);
+        unlock_avcodec(codec2);
+        if (ret < 0) {
+            goto free_and_end;
+        }
+    }
     if (!HAVE_THREADS && !(codec2->caps_internal & FF_CODEC_CAP_AUTO_THREADS))
         avctx->thread_count = 1;
 
@@ -386,8 +379,8 @@ FF_DISABLE_DEPRECATION_WARNINGS
                 avctx->channel_layout = 0;
             }
         }
-        if ((avctx->channels && avctx->channels < 0) ||
-            avctx->channels > (int)FF_SANE_NB_CHANNELS) {
+        if (avctx->channels && avctx->channels < 0 ||
+            avctx->channels > FF_SANE_NB_CHANNELS) {
             ret = AVERROR(EINVAL);
             goto free_and_end;
         }
@@ -403,9 +396,8 @@ FF_ENABLE_DEPRECATION_WARNINGS
             avctx->time_base = av_inv_q(av_mul_q(avctx->framerate, (AVRational){avctx->ticks_per_frame, 1}));
 #endif
     }
-    if (codec->priv_class) {
+    if (codec->priv_class)
         //av_assert0(*(const AVClass **)avctx->priv_data == codec->priv_class);
-    }
 
 end:
 
@@ -429,6 +421,19 @@ void avcodec_flush_buffers(AVCodecContext *avctx)
                    "that doesn't support it\n");
             return;
         }
+        if (avci->in_frame)
+            av_frame_unref(avci->in_frame);
+    } else {
+        av_packet_unref(avci->last_pkt_props);
+        while (av_fifo_read(avci->pkt_props, avci->last_pkt_props, 1) >= 0)
+            av_packet_unref(avci->last_pkt_props);
+
+        av_packet_unref(avci->in_pkt);
+
+        avctx->pts_correction_last_pts =
+        avctx->pts_correction_last_dts = INT64_MIN;
+
+        av_bsf_flush(avci->bsf);
     }
 
     avci->draining      = 0;
@@ -437,36 +442,26 @@ void avcodec_flush_buffers(AVCodecContext *avctx)
     av_frame_unref(avci->buffer_frame);
     av_packet_unref(avci->buffer_pkt);
 
-    av_packet_unref(avci->last_pkt_props);
-    while (av_fifo_read(avci->pkt_props, avci->last_pkt_props, 1) >= 0)
-        av_packet_unref(avci->last_pkt_props);
-
-    av_frame_unref(avci->es.in_frame);
-    av_packet_unref(avci->in_pkt);
-
-   /* if (HAVE_THREADS && avctx->active_thread_type & FF_THREAD_FRAME)
+    if (HAVE_THREADS && avctx->active_thread_type & FF_THREAD_FRAME)
         ff_thread_flush(avctx);
-    else */if (ffcodec(avctx->codec)->flush)
+    else if (ffcodec(avctx->codec)->flush)
         ffcodec(avctx->codec)->flush(avctx);
-
-    avctx->pts_correction_last_pts =
-    avctx->pts_correction_last_dts = INT64_MIN;
-
-    if (avci->bsf)
-        av_bsf_flush(avci->bsf);
 }
 
 void avsubtitle_free(AVSubtitle *sub)
 {
     int i;
 
-    for (i = 0; i < (int)sub->num_rects; i++) {
-        av_freep(&sub->rects[i]->data[0]);
-        av_freep(&sub->rects[i]->data[1]);
-        av_freep(&sub->rects[i]->data[2]);
-        av_freep(&sub->rects[i]->data[3]);
-        av_freep(&sub->rects[i]->text);
-        av_freep(&sub->rects[i]->ass);
+    for (i = 0; i < sub->num_rects; i++) {
+        AVSubtitleRect *const rect = sub->rects[i];
+
+        av_freep(&rect->data[0]);
+        av_freep(&rect->data[1]);
+        av_freep(&rect->data[2]);
+        av_freep(&rect->data[3]);
+        av_freep(&rect->text);
+        av_freep(&rect->ass);
+
         av_freep(&sub->rects[i]);
     }
 
@@ -485,12 +480,12 @@ av_cold int avcodec_close(AVCodecContext *avctx)
     if (avcodec_is_open(avctx)) {
         AVCodecInternal *avci = avctx->internal;
 
-        // if (CONFIG_FRAME_THREAD_ENCODER &&
-        //     avci->frame_thread_encoder && avctx->thread_count > 1) {
-        //     ff_frame_thread_encoder_free(avctx);
-        // }
-        // if (HAVE_THREADS && avci->thread_ctx)
-        //     ff_thread_free(avctx);
+        if (CONFIG_FRAME_THREAD_ENCODER &&
+            avci->frame_thread_encoder && avctx->thread_count > 1) {
+            ff_frame_thread_encoder_free(avctx);
+        }
+        if (HAVE_THREADS && avci->thread_ctx)
+            ff_thread_free(avctx);
         if (avci->needs_close && ffcodec(avctx->codec)->close)
             ffcodec(avctx->codec)->close(avctx);
         avci->byte_buffer_size = 0;
@@ -507,7 +502,7 @@ av_cold int avcodec_close(AVCodecContext *avctx)
         av_packet_free(&avci->last_pkt_props);
 
         av_packet_free(&avci->in_pkt);
-        av_frame_free(&avci->es.in_frame);
+        av_frame_free(&avci->in_frame);
 
         av_buffer_unref(&avci->pool);
 

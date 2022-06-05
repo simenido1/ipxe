@@ -31,7 +31,6 @@
 #include "avio.h"
 #include "internal.h"
 #include "metadata.h"
-#include <string.h>
 
 extern const AVMetadataConv ff_riff_info_conv[];
 

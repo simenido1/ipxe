@@ -526,6 +526,7 @@ extern const AVInputFormat  ff_image_sgi_pipe_demuxer;
 extern const AVInputFormat  ff_image_svg_pipe_demuxer;
 extern const AVInputFormat  ff_image_sunrast_pipe_demuxer;
 extern const AVInputFormat  ff_image_tiff_pipe_demuxer;
+extern const AVInputFormat  ff_image_vbn_pipe_demuxer;
 extern const AVInputFormat  ff_image_webp_pipe_demuxer;
 extern const AVInputFormat  ff_image_xbm_pipe_demuxer;
 extern const AVInputFormat  ff_image_xpm_pipe_demuxer;
@@ -553,7 +554,7 @@ const AVOutputFormat *av_muxer_iterate(void **opaque)
 
     if (i < size) {
         f = muxer_list[i];
-    } else if ((tmp = atomic_load_explicit(&outdev_list_intptr, memory_order_relaxed))) {
+    } else if (tmp = atomic_load_explicit(&outdev_list_intptr, memory_order_relaxed)) {
         const AVOutputFormat *const *outdev_list = (const AVOutputFormat *const *)tmp;
         f = outdev_list[i - size];
     }
@@ -572,7 +573,7 @@ const AVInputFormat *av_demuxer_iterate(void **opaque)
 
     if (i < size) {
         f = demuxer_list[i];
-    } else if ((tmp = atomic_load_explicit(&indev_list_intptr, memory_order_relaxed))) {
+    } else if (tmp = atomic_load_explicit(&indev_list_intptr, memory_order_relaxed)) {
         const AVInputFormat *const *indev_list = (const AVInputFormat *const *)tmp;
         f = indev_list[i - size];
     }

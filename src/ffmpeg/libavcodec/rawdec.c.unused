@@ -292,7 +292,7 @@ static int raw_decode(AVCodecContext *avctx, AVFrame *frame,
                 }
             }
         } else {
-            av_assert0(avctx->bits_per_coded_sample == 1);
+          //avassert0(avctx->bits_per_coded_sample == 1);
             for (i = 0, j = 0; 8 * j + 7 < buf_size && i<avpkt->size; i++, j++) {
                 dst[8 * j + 0] = buf[i] >> 7;
                 dst[8 * j + 1] = buf[i] >> 6 & 1;

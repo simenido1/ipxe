@@ -48,7 +48,6 @@
 #include "threadframe.h"
 #include "wmv2dec.h"
 #include <limits.h>
-#include <string.h>
 
 static void dct_unquantize_mpeg1_intra_c(MpegEncContext *s,
                                    int16_t *block, int n, int qscale)
@@ -269,14 +268,12 @@ static void dct_unquantize_h263_inter_c(MpegEncContext *s,
 
 static void gray16(uint8_t *dst, const uint8_t *src, ptrdiff_t linesize, int h)
 {
-    (void)src;
     while(h--)
         memset(dst + h*linesize, 128, 16);
 }
 
 static void gray8(uint8_t *dst, const uint8_t *src, ptrdiff_t linesize, int h)
 {
-    (void)src;
     while(h--)
         memset(dst + h*linesize, 128, 8);
 }
@@ -930,8 +927,7 @@ static inline int hpel_motion_lowres(MpegEncContext *s,
     const int s_mask   = (2 << lowres) - 1;
     int emu = 0;
     int sx, sy;
-    (void)width;
-    (void)height;
+
     if (s->quarter_sample) {
         motion_x /= 2;
         motion_y /= 2;
@@ -939,8 +935,8 @@ static inline int hpel_motion_lowres(MpegEncContext *s,
 
     sx = motion_x & s_mask;
     sy = motion_y & s_mask;
-    src_x += motion_x >> (lowres + 1);
-    src_y += motion_y >> (lowres + 1);
+    src_x += motion_x >> lowres + 1;
+    src_y += motion_y >> lowres + 1;
 
     src   += src_y * stride + src_x;
 
@@ -1000,8 +996,8 @@ static av_always_inline void mpeg_motion_lowres(MpegEncContext *s,
 
     sx = motion_x & s_mask;
     sy = motion_y & s_mask;
-    src_x = s->mb_x * 2 * block_s + (motion_x >> (lowres + 1));
-    src_y = (mb_y * 2 * block_s >> field_based) + (motion_y >> (lowres + 1));
+    src_x = s->mb_x * 2 * block_s + (motion_x >> lowres + 1);
+    src_y = (mb_y * 2 * block_s >> field_based) + (motion_y >> lowres + 1);
 
     if (s->out_format == FMT_H263) {
         uvsx    = ((motion_x >> 1) & s_mask) | (sx & 1);
@@ -1022,8 +1018,8 @@ static av_always_inline void mpeg_motion_lowres(MpegEncContext *s,
             my      = motion_y / 2;
             uvsx    = mx & s_mask;
             uvsy    = my & s_mask;
-            uvsrc_x = s->mb_x * block_s                 + (mx >> (lowres + 1));
-            uvsrc_y =   (mb_y * block_s >> field_based) + (my >> (lowres + 1));
+            uvsrc_x = s->mb_x * block_s                 + (mx >> lowres + 1);
+            uvsrc_y =   (mb_y * block_s >> field_based) + (my >> lowres + 1);
         } else {
             if(s->chroma_x_shift){
             //Chroma422
@@ -1113,8 +1109,8 @@ static inline void chroma_4mv_motion_lowres(MpegEncContext *s,
     const int op_index   = FFMIN(lowres, 3);
     const int block_s    = 8 >> lowres;
     const int s_mask     = (2 << lowres) - 1;
-    const int h_edge_pos = s->h_edge_pos >> (lowres + 1);
-    const int v_edge_pos = s->v_edge_pos >> (lowres + 1);
+    const int h_edge_pos = s->h_edge_pos >> lowres + 1;
+    const int v_edge_pos = s->v_edge_pos >> lowres + 1;
     int emu = 0, src_x, src_y, sx, sy;
     ptrdiff_t offset;
     uint8_t *ptr;
@@ -1131,8 +1127,8 @@ static inline void chroma_4mv_motion_lowres(MpegEncContext *s,
 
     sx = mx & s_mask;
     sy = my & s_mask;
-    src_x = s->mb_x * block_s + (mx >> (lowres + 1));
-    src_y = s->mb_y * block_s + (my >> (lowres + 1));
+    src_x = s->mb_x * block_s + (mx >> lowres + 1);
+    src_y = s->mb_y * block_s + (my >> lowres + 1);
 
     offset = src_y * s->uvlinesize + src_x;
     ptr = ref_picture[1] + offset;

@@ -19,16 +19,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-//#include "libavutil/avassert.h"
+#include "libavutil/avassert.h"
 #include "libavutil/dict.h"
 #include "libavutil/error.h"
 #include "libavutil/intreadwrite.h"
-#include "libavutil/internal.h"
 #include "libavutil/avutil_log.h"
 #include "avformat.h"
 #include "avio_internal.h"
 #include "riff.h"
-
+#include "libavutil/internal.h"
 int ff_get_guid(AVIOContext *s, ff_asf_guid *g)
 {
     int ret;
@@ -94,7 +93,7 @@ static void parse_waveformatex(AVFormatContext *s, AVIOContext *pb, AVCodecParam
 int ff_get_wav_header(AVFormatContext *s, AVIOContext *pb,
                       AVCodecParameters *par, int size, int big_endian)
 {
-    int id, channels=0;
+    int id, channels;
     uint64_t bitrate = 0;
 
     if (size < 14) {
@@ -292,7 +291,7 @@ int ff_read_riff_info(AVFormatContext *s, int64_t size)
         // https://connect.microsoft.com/VisualStudio/feedback/details/2291638
         key[4] = 0;
 
-        if (avio_read(pb, (unsigned char *)value, chunk_size) != chunk_size) {
+        if (avio_read(pb, value, chunk_size) != chunk_size) {
             av_log(s, AV_LOG_WARNING,
                    "premature end of file while reading INFO tag\n");
         }

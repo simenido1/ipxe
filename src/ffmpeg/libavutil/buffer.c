@@ -20,13 +20,12 @@
 #include <stdint.h>
 #include <string.h>
 
-//#include "avassert.h"
+#include "avassert.h"
 #include "buffer_internal.h"
 #include "common.h"
 #include "mem.h"
 #include "thread.h"
-#include "internal.h"
-
+#include "libavutil/internal.h"
 static AVBufferRef *buffer_create(AVBuffer *buf, uint8_t *data, size_t size,
                                   void (*free)(void *opaque, uint8_t *data),
                                   void *opaque, int flags)
@@ -72,28 +71,33 @@ AVBufferRef *av_buffer_create(uint8_t *data, size_t size,
 
 void av_buffer_default_free(void *opaque, uint8_t *data)
 {
-    (void)opaque;
     av_free(data);
 }
 
 AVBufferRef *av_buffer_alloc(size_t size)
 {
+    //printf("buffer 79\n");
     AVBufferRef *ret = NULL;
     uint8_t    *data = NULL;
 
     data = av_malloc(size);
-    if (!data)
+    if (!data) {
+       //printf("buffer 85, size=%d\n", (int)size);
         return NULL;
+    }
 
     ret = av_buffer_create(data, size, av_buffer_default_free, NULL, 0);
-    if (!ret)
+    if (!ret) {
+       //printf("buffer 91\n");
         av_freep(&data);
+    }
 
     return ret;
 }
 
 AVBufferRef *av_buffer_allocz(size_t size)
 {
+   //printf("buffer 95\n");
     AVBufferRef *ret = av_buffer_alloc(size);
     if (!ret)
         return NULL;
@@ -128,9 +132,7 @@ static void buffer_replace(AVBufferRef **dst, AVBufferRef **src)
     } else
         av_freep(dst);
 
-    // if (atomic_fetch_sub_explicit(&b->refcount, 1, memory_order_acq_rel) == 1) {
-        b->refcount -= 1;
-        if (b->refcount == 0) {
+    if (atomic_fetch_sub_explicit(&b->refcount, 1, memory_order_acq_rel) == 1) {
         /* b->free below might already free the structure containing *b,
          * so we have to read the flag now to avoid use-after-free. */
         int free_avbuffer = !(b->flags_internal & BUFFER_FLAG_NO_FREE);
@@ -268,7 +270,7 @@ AVBufferPool *av_buffer_pool_init2(size_t size, void *opaque,
     if (!pool)
         return NULL;
 
-    //ff_mutex_init(&pool->mutex, NULL);
+    ff_mutex_init(&pool->mutex, NULL);
 
     pool->size      = size;
     pool->opaque    = opaque;
@@ -287,7 +289,7 @@ AVBufferPool *av_buffer_pool_init(size_t size, AVBufferRef* (*alloc)(size_t size
     if (!pool)
         return NULL;
 
-    //ff_mutex_init(&pool->mutex, NULL);
+    ff_mutex_init(&pool->mutex, NULL);
 
     pool->size     = size;
     pool->alloc    = alloc ? alloc : av_buffer_alloc;
@@ -315,7 +317,7 @@ static void buffer_pool_flush(AVBufferPool *pool)
 static void buffer_pool_free(AVBufferPool *pool)
 {
     buffer_pool_flush(pool);
-    //ff_mutex_destroy(&pool->mutex);
+    ff_mutex_destroy(&pool->mutex);
 
     if (pool->pool_free)
         pool->pool_free(pool->opaque);
@@ -332,56 +334,54 @@ void av_buffer_pool_uninit(AVBufferPool **ppool)
     pool   = *ppool;
     *ppool = NULL;
 
-    //ff_mutex_lock(&pool->mutex);
+    ff_mutex_lock(&pool->mutex);
     buffer_pool_flush(pool);
-    //ff_mutex_unlock(&pool->mutex);
+    ff_mutex_unlock(&pool->mutex);
 
-    // if (atomic_fetch_sub_explicit(&pool->refcount, 1, memory_order_acq_rel) == 1)
-    //     buffer_pool_free(pool);
-    pool->refcount -= 1;
-    if (pool->refcount == 0) {
+    if (atomic_fetch_sub_explicit(&pool->refcount, 1, memory_order_acq_rel) == 1)
         buffer_pool_free(pool);
-    }
 }
 
 static void pool_release_buffer(void *opaque, uint8_t *data)
 {
     BufferPoolEntry *buf = opaque;
     AVBufferPool *pool = buf->pool;
-    (void)data;
+
     if(CONFIG_MEMORY_POISONING)
         memset(buf->data, FF_MEMORY_POISON, pool->size);
 
-    //ff_mutex_lock(&pool->mutex);
+    ff_mutex_lock(&pool->mutex);
     buf->next = pool->pool;
     pool->pool = buf;
-    //ff_mutex_unlock(&pool->mutex);
+    ff_mutex_unlock(&pool->mutex);
 
-    // if (atomic_fetch_sub_explicit(&pool->refcount, 1, memory_order_acq_rel) == 1)
-    //     buffer_pool_free(pool);
-    pool->refcount -= 1;
-    if (pool->refcount == 0) {
+    if (atomic_fetch_sub_explicit(&pool->refcount, 1, memory_order_acq_rel) == 1)
         buffer_pool_free(pool);
-    }
 }
 
 /* allocate a new buffer and override its free() callback so that
  * it is returned to the pool on free */
 static AVBufferRef *pool_alloc_buffer(AVBufferPool *pool)
 {
+   //printf("buffer 360\n");
     BufferPoolEntry *buf;
     AVBufferRef     *ret;
 
     //av_assert0(pool->alloc || pool->alloc2);
-
+    // if (!(pool->alloc || pool->alloc2)) {
+    //    //printf("no pool->alloc(2)\n");
+    // }
     ret = pool->alloc2 ? pool->alloc2(pool->opaque, pool->size) :
                          pool->alloc(pool->size);
-    if (!ret)
+    if (!ret) {
+       //printf("buffer 369\n");
         return NULL;
+    }
 
     buf = av_mallocz(sizeof(*buf));
     if (!buf) {
         av_buffer_unref(&ret);
+       //printf("buffer 376\n");
         return NULL;
     }
 
@@ -401,13 +401,15 @@ AVBufferRef *av_buffer_pool_get(AVBufferPool *pool)
     AVBufferRef *ret;
     BufferPoolEntry *buf;
 
-    //ff_mutex_lock(&pool->mutex);
+    ff_mutex_lock(&pool->mutex);
     buf = pool->pool;
     if (buf) {
+       //printf("buffer 395\n");
         memset(&buf->buffer, 0, sizeof(buf->buffer));
         ret = buffer_create(&buf->buffer, buf->data, pool->size,
                             pool_release_buffer, buf, 0);
         if (ret) {
+           //printf("buffer 399\n");
             pool->pool = buf->next;
             buf->next = NULL;
             buf->buffer.flags_internal |= BUFFER_FLAG_NO_FREE;
@@ -415,11 +417,13 @@ AVBufferRef *av_buffer_pool_get(AVBufferPool *pool)
     } else {
         ret = pool_alloc_buffer(pool);
     }
-    //ff_mutex_unlock(&pool->mutex);
+    ff_mutex_unlock(&pool->mutex);
 
-    if (ret)
+    if (ret) {
+       //printf("buffer 410\n");
         atomic_fetch_add_explicit(&pool->refcount, 1, memory_order_relaxed);
-
+    }
+   //printf("buffer 413, ret=%p\n", ret);
     return ret;
 }
 

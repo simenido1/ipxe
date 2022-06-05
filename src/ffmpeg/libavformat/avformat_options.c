@@ -21,10 +21,9 @@
 #include "avio_internal.h"
 #include "internal.h"
 
-// #include "libavutil/avassert.h"
+#include "libavutil/avassert.h"
 #include "libavutil/internal.h"
 #include "libavutil/opt.h"
-#include <string.h>
 
 /**
  * @file
@@ -48,7 +47,7 @@ static void *format_child_next(void *obj, void *prev)
     AVFormatContext *s = obj;
     if (!prev && s->priv_data &&
         ((s->iformat && s->iformat->priv_class) ||
-         ( s->oformat && s->oformat->priv_class)))
+          s->oformat && s->oformat->priv_class))
         return s->priv_data;
     if (s->pb && s->pb->av_class && prev != s->pb)
         return s->pb;
@@ -106,7 +105,7 @@ static const AVClass *format_child_class_iterate(void **iter)
 
 finish:
     // make sure none av_(de)muxer_iterate does not set the high bits of val
-    // av_assert0(!((uintptr_t)val >> ITER_STATE_SHIFT));
+    //av_assert0(!((uintptr_t)val >> ITER_STATE_SHIFT));
     *iter = (void*)((uintptr_t)val | (state << ITER_STATE_SHIFT));
     return ret;
 }
@@ -132,25 +131,23 @@ static const AVClass av_format_context_class = {
 static int io_open_default(AVFormatContext *s, AVIOContext **pb,
                            const char *url, int flags, AVDictionary **options)
 {
-    //int loglevel;
+    int loglevel;
 
     if (!strcmp(url, s->url) ||
-        (s->iformat && !strcmp(s->iformat->name, "image2")) ||
-        (s->oformat && !strcmp(s->oformat->name, "image2"))
+        s->iformat && !strcmp(s->iformat->name, "image2") ||
+        s->oformat && !strcmp(s->oformat->name, "image2")
     ) {
-        //loglevel = AV_LOG_DEBUG;
-    } else {
-        //loglevel = AV_LOG_INFO;
-    }
+        loglevel = AV_LOG_DEBUG;
+    } else
+        loglevel = AV_LOG_INFO;
 
-    //av_log(s, loglevel, "Opening \'%s\' for %s\n", url, flags & AVIO_FLAG_WRITE ? "writing" : "reading");
+    av_log(s, loglevel, "Opening \'%s\' for %s\n", url, flags & AVIO_FLAG_WRITE ? "writing" : "reading");
 
     return ffio_open_whitelist(pb, url, flags, &s->interrupt_callback, options, s->protocol_whitelist, s->protocol_blacklist);
 }
 
 static int io_close2_default(AVFormatContext *s, AVIOContext *pb)
 {
-    (void)s;
     return avio_close(pb);
 }
 

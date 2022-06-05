@@ -159,7 +159,7 @@ static int alloc_frame_buffer(AVCodecContext *avctx,  Picture *pic,
     }
 
     if (avctx->hwaccel) {
-        //assert(!pic->hwaccel_picture_private);
+        assert(!pic->hwaccel_picture_private);
         if (avctx->hwaccel->frame_priv_data_size) {
             pic->hwaccel_priv_buf = av_buffer_allocz(avctx->hwaccel->frame_priv_data_size);
             if (!pic->hwaccel_priv_buf) {
@@ -268,8 +268,11 @@ int ff_alloc_picture(AVCodecContext *avctx, Picture *pic, MotionEstContext *me,
         //av_assert0(!pic->f->buf[0]);
         if (alloc_frame_buffer(avctx, pic, me, sc,
                                chroma_x_shift, chroma_y_shift,
-                               *linesize, *uvlinesize) < 0)
+                               *linesize, *uvlinesize) < 0) {
+            
+            printf("mpegpicture 273\n");
             return -1;
+                               }
 
         *linesize   = pic->f->linesize[0];
         *uvlinesize = pic->f->linesize[1];
@@ -290,13 +293,13 @@ int ff_alloc_picture(AVCodecContext *avctx, Picture *pic, MotionEstContext *me,
     }
 
     pic->mbskip_table = pic->mbskip_table_buf->data;
-    pic->qscale_table = (int8_t *)pic->qscale_table_buf->data + 2 * mb_stride + 1;
+    pic->qscale_table = pic->qscale_table_buf->data + 2 * mb_stride + 1;
     pic->mb_type      = (uint32_t*)pic->mb_type_buf->data + 2 * mb_stride + 1;
 
     if (pic->motion_val_buf[0]) {
         for (i = 0; i < 2; i++) {
             pic->motion_val[i] = (int16_t (*)[2])pic->motion_val_buf[i]->data + 4;
-            pic->ref_index[i]  = (int8_t *)pic->ref_index_buf[i]->data;
+            pic->ref_index[i]  = pic->ref_index_buf[i]->data;
         }
     }
 

@@ -26,7 +26,6 @@
  */
 
 #include <inttypes.h>
-#include <string.h>
 
 #include "libavutil/imgutils.h"
 #include "mathops.h"

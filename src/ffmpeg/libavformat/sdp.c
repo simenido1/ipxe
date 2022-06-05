@@ -27,7 +27,7 @@
 #include "libavutil/parseutils.h"
 #include "libavutil/opt.h"
 #include "libavcodec/xiph.h"
-// #include "libavcodec/mpeg4audio.h"
+#include "libavcodec/mpeg4audio.h"
 #include "avformat.h"
 #include "internal.h"
 #include "avc.h"

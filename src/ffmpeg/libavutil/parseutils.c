@@ -370,7 +370,7 @@ int av_parse_color(uint8_t *rgba_color, const char *color_string, int slen,
     if (slen < 0)
         slen = strlen(color_string);
     av_strlcpy(color_string2, color_string + hex_offset,
-               FFMIN(slen-hex_offset+1, (int)sizeof(color_string2)));
+               FFMIN(slen-hex_offset+1, sizeof(color_string2)));
     if ((tail = strchr(color_string2, ALPHA_SEP)))
         *tail++ = 0;
     len = strlen(color_string2);
@@ -383,7 +383,7 @@ int av_parse_color(uint8_t *rgba_color, const char *color_string, int slen,
         rgba_color[2] = rgba >> 8;
         rgba_color[3] = rgba;
     } else if (hex_offset ||
-               (int)strspn(color_string2, "0123456789ABCDEFabcdef") == len) {
+               strspn(color_string2, "0123456789ABCDEFabcdef") == len) {
         char *tail;
         unsigned int rgba = strtoul(color_string2, &tail, 16);
 
@@ -623,7 +623,7 @@ int av_parse_time(int64_t *timeval, const char *timestr, int duration)
         }
 
         /* parse the year-month-day part */
-        for (i = 0; i < (int)FF_ARRAY_ELEMS(date_fmt); i++) {
+        for (i = 0; i < FF_ARRAY_ELEMS(date_fmt); i++) {
             q = av_small_strptime(p, date_fmt[i], &dt);
             if (q)
                 break;
@@ -644,7 +644,7 @@ int av_parse_time(int64_t *timeval, const char *timestr, int duration)
                 p++;
 
         /* parse the hour-minute-second part */
-        for (i = 0; i < (int)FF_ARRAY_ELEMS(time_fmt); i++) {
+        for (i = 0; i < FF_ARRAY_ELEMS(time_fmt); i++) {
             q = av_small_strptime(p, time_fmt[i], &dt);
             if (q)
                 break;
@@ -714,7 +714,7 @@ int av_parse_time(int64_t *timeval, const char *timestr, int duration)
             int sign = (*q == '+' ? -1 : 1);
             q++;
             p = q;
-            for (i = 0; i < (int)FF_ARRAY_ELEMS(tz_fmt); i++) {
+            for (i = 0; i < FF_ARRAY_ELEMS(tz_fmt); i++) {
                 q = av_small_strptime(p, tz_fmt[i], &tz);
                 if (q)
                     break;
@@ -765,7 +765,7 @@ int av_find_info_tag(char *arg, int arg_size, const char *tag1, const char *info
     for(;;) {
         q = tag;
         while (*p != '\0' && *p != '=' && *p != '&') {
-            if ((q - tag) < (int)(sizeof(tag) - 1))
+            if ((q - tag) < sizeof(tag) - 1)
                 *q++ = *p;
             p++;
         }

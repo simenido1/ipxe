@@ -111,10 +111,6 @@ RLTable ff_mpeg4_rl_intra = {
     ff_mpeg4_intra_vlc,
     ff_mpeg4_intra_run,
     ff_mpeg4_intra_level,
-    .index_run = {NULL},
-    .max_level = {NULL},
-    .max_run = {NULL},
-    .rl_vlc = {NULL},
 };
 
 /* Note this is identical to the intra rvlc except that it is reordered. */
@@ -220,10 +216,6 @@ RLTable ff_rvlc_rl_inter = {
     inter_rvlc,
     inter_rvlc_run,
     inter_rvlc_level,
-    .index_run = {NULL},
-    .max_level = {NULL},
-    .max_run = {NULL},
-    .rl_vlc = {NULL},
 };
 
 static const uint16_t intra_rvlc[170][2]={
@@ -328,10 +320,6 @@ RLTable ff_rvlc_rl_intra = {
     intra_rvlc,
     intra_rvlc_run,
     intra_rvlc_level,
-    .index_run = {NULL},
-    .max_level = {NULL},
-    .max_run = {NULL},
-    .rl_vlc = {NULL},
 };
 
 const uint8_t ff_sprite_trajectory_lens[15] = {

@@ -731,7 +731,7 @@ char* ff_AMediaFormat_toString(FFAMediaFormat* format)
     JNIEnv *env = NULL;
     jstring description = NULL;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN(env, format, NULL);
 
@@ -757,7 +757,7 @@ int ff_AMediaFormat_getInt32(FFAMediaFormat* format, const char *name, int32_t *
     jstring key = NULL;
     jboolean contains_key;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN(env, format, 0);
 
@@ -796,7 +796,7 @@ int ff_AMediaFormat_getInt64(FFAMediaFormat* format, const char *name, int64_t *
     jstring key = NULL;
     jboolean contains_key;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN(env, format, 0);
 
@@ -835,7 +835,7 @@ int ff_AMediaFormat_getFloat(FFAMediaFormat* format, const char *name, float *ou
     jstring key = NULL;
     jboolean contains_key;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN(env, format, 0);
 
@@ -875,7 +875,7 @@ int ff_AMediaFormat_getBuffer(FFAMediaFormat* format, const char *name, void** d
     jboolean contains_key;
     jobject result = NULL;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN(env, format, 0);
 
@@ -933,7 +933,7 @@ int ff_AMediaFormat_getString(FFAMediaFormat* format, const char *name, const ch
     jboolean contains_key;
     jstring result = NULL;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN(env, format, 0);
 
@@ -979,7 +979,7 @@ void ff_AMediaFormat_setInt32(FFAMediaFormat* format, const char* name, int32_t 
     JNIEnv *env = NULL;
     jstring key = NULL;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN_VOID(env, format);
 
@@ -1004,7 +1004,7 @@ void ff_AMediaFormat_setInt64(FFAMediaFormat* format, const char* name, int64_t 
     JNIEnv *env = NULL;
     jstring key = NULL;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN_VOID(env, format);
 
@@ -1029,7 +1029,7 @@ void ff_AMediaFormat_setFloat(FFAMediaFormat* format, const char* name, float va
     JNIEnv *env = NULL;
     jstring key = NULL;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN_VOID(env, format);
 
@@ -1055,7 +1055,7 @@ void ff_AMediaFormat_setString(FFAMediaFormat* format, const char* name, const c
     jstring key = NULL;
     jstring string = NULL;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN_VOID(env, format);
 
@@ -1091,7 +1091,7 @@ void ff_AMediaFormat_setBuffer(FFAMediaFormat* format, const char* name, void* d
     jobject buffer = NULL;
     void *buffer_data = NULL;
 
-    av_assert0(format != NULL);
+  //avassert0(format != NULL);
 
     JNI_GET_ENV_OR_RETURN_VOID(env, format);
 
@@ -1225,7 +1225,7 @@ static inline FFAMediaCodec *codec_create(int method, const char *arg)
     case CREATE_DECODER_BY_TYPE: create_id = codec->jfields.create_decoder_by_type_id; break;
     case CREATE_ENCODER_BY_TYPE: create_id = codec->jfields.create_encoder_by_type_id; break;
     default:
-        av_assert0(0);
+      //avassert0(0);
     }
 
     object = (*env)->CallStaticObjectMethod(env,

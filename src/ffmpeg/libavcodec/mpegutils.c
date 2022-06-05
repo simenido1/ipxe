@@ -25,11 +25,10 @@
 #include "libavutil/pixdesc.h"
 #include "libavutil/motion_vector.h"
 #include "libavutil/avassert.h"
-#include "libavutil/internal.h"
+
 #include "avcodec.h"
 #include "mpegutils.h"
-#include <string.h>
-
+#include "libavutil/internal.h"
 static int add_mb(AVMotionVector *mb, uint32_t mb_type,
                   int dst_x, int dst_y,
                   int motion_x, int motion_y, int motion_scale,

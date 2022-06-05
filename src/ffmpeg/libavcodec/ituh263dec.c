@@ -49,7 +49,6 @@
 #include "mpeg4video.h"
 #include "mpegvideodata.h"
 #include "mpeg4videodec.h"
-#include <string.h>
 
 // The defines below define the number of bits that are read at once for
 // reading vlc values. Changing these may improve speed and data cache needs
@@ -98,10 +97,10 @@ void ff_h263_show_pict_info(MpegEncContext *s){
 /***********************************************/
 /* decoding */
 
-VLC ff_h263_intra_MCBPC_vlc;
-VLC ff_h263_inter_MCBPC_vlc;
-VLC ff_h263_cbpy_vlc;
-VLC ff_h263_mv_vlc;
+VLC * ff_h263_intra_MCBPC_vlc = NULL;
+VLC * ff_h263_inter_MCBPC_vlc = NULL;
+VLC * ff_h263_cbpy_vlc = NULL;
+VLC * ff_h263_mv_vlc = NULL;
 static VLC h263_mbtype_b_vlc;
 static VLC cbpc_b_vlc;
 
@@ -109,16 +108,20 @@ static VLC cbpc_b_vlc;
 
 static av_cold void h263_decode_init_vlc(void)
 {
-    INIT_VLC_STATIC(&ff_h263_intra_MCBPC_vlc, INTRA_MCBPC_VLC_BITS, 9,
+    ff_h263_intra_MCBPC_vlc = malloc(sizeof(VLC));
+    ff_h263_inter_MCBPC_vlc = malloc(sizeof(VLC));
+    ff_h263_cbpy_vlc = malloc(sizeof(VLC));
+    ff_h263_mv_vlc = malloc(sizeof(VLC));
+    INIT_VLC_STATIC(ff_h263_intra_MCBPC_vlc, INTRA_MCBPC_VLC_BITS, 9,
                     ff_h263_intra_MCBPC_bits, 1, 1,
                     ff_h263_intra_MCBPC_code, 1, 1, 72);
-    INIT_VLC_STATIC(&ff_h263_inter_MCBPC_vlc, INTER_MCBPC_VLC_BITS, 28,
+    INIT_VLC_STATIC(ff_h263_inter_MCBPC_vlc, INTER_MCBPC_VLC_BITS, 28,
                     ff_h263_inter_MCBPC_bits, 1, 1,
                     ff_h263_inter_MCBPC_code, 1, 1, 198);
-    INIT_VLC_STATIC(&ff_h263_cbpy_vlc, CBPY_VLC_BITS, 16,
+    INIT_VLC_STATIC(ff_h263_cbpy_vlc, CBPY_VLC_BITS, 16,
                     &ff_h263_cbpy_tab[0][1], 2, 1,
                     &ff_h263_cbpy_tab[0][0], 2, 1, 64);
-    INIT_VLC_STATIC(&ff_h263_mv_vlc, H263_MV_VLC_BITS, 33,
+    INIT_VLC_STATIC(ff_h263_mv_vlc, H263_MV_VLC_BITS, 33,
                     &ff_mvtab[0][1], 2, 1,
                     &ff_mvtab[0][0], 2, 1, 538);
     ff_h263_init_rl_inter();
@@ -272,7 +275,7 @@ int ff_h263_resync(MpegEncContext *s){
 int ff_h263_decode_motion(MpegEncContext * s, int pred, int f_code)
 {
     int code, val, sign, shift;
-    code = get_vlc2(&s->gb, ff_h263_mv_vlc.table, H263_MV_VLC_BITS, 2);
+    code = get_vlc2(&s->gb, ff_h263_mv_vlc->table, H263_MV_VLC_BITS, 2);
 
     if (code == 0)
         return pred;
@@ -365,13 +368,13 @@ static void preview_obmc(MpegEncContext *s){
             s->current_picture.mb_type[xy] = MB_TYPE_SKIP | MB_TYPE_16x16 | MB_TYPE_L0;
             goto end;
         }
-        cbpc = get_vlc2(&s->gb, ff_h263_inter_MCBPC_vlc.table, INTER_MCBPC_VLC_BITS, 2);
+        cbpc = get_vlc2(&s->gb, ff_h263_inter_MCBPC_vlc->table, INTER_MCBPC_VLC_BITS, 2);
     }while(cbpc == 20);
 
     if(cbpc & 4){
         s->current_picture.mb_type[xy] = MB_TYPE_INTRA;
     }else{
-        get_vlc2(&s->gb, ff_h263_cbpy_vlc.table, CBPY_VLC_BITS, 1);
+        get_vlc2(&s->gb, ff_h263_cbpy_vlc->table, CBPY_VLC_BITS, 1);
         if (cbpc & 8) {
             if(s->modified_quant){
                 if(get_bits1(&s->gb)) skip_bits(&s->gb, 1);
@@ -753,7 +756,7 @@ static int set_direct_mv(MpegEncContext *s)
     int colocated_mb_type = p->mb_type[mb_index];
     int i;
 
-    if (s->codec_tag == (int)AV_RL32("U263") && p->f->pict_type == AV_PICTURE_TYPE_I) {
+    if (s->codec_tag == AV_RL32("U263") && p->f->pict_type == AV_PICTURE_TYPE_I) {
         p = &s->last_picture;
         colocated_mb_type = p->mb_type[mb_index];
     }
@@ -808,7 +811,7 @@ int ff_h263_decode_mb(MpegEncContext *s,
                 s->mb_skipped = !(s->obmc | s->loop_filter);
                 goto end;
             }
-            cbpc = get_vlc2(&s->gb, ff_h263_inter_MCBPC_vlc.table, INTER_MCBPC_VLC_BITS, 2);
+            cbpc = get_vlc2(&s->gb, ff_h263_inter_MCBPC_vlc->table, INTER_MCBPC_VLC_BITS, 2);
             if (cbpc < 0){
                 av_log(s->avctx, AV_LOG_ERROR, "cbpc damaged at %d %d\n", s->mb_x, s->mb_y);
                 return SLICE_ERROR;
@@ -823,7 +826,7 @@ int ff_h263_decode_mb(MpegEncContext *s,
 
         if(s->pb_frame && get_bits1(&s->gb))
             pb_mv_count = h263_get_modb(&s->gb, s->pb_frame, &cbpb);
-        cbpy = get_vlc2(&s->gb, ff_h263_cbpy_vlc.table, CBPY_VLC_BITS, 1);
+        cbpy = get_vlc2(&s->gb, ff_h263_cbpy_vlc->table, CBPY_VLC_BITS, 1);
 
         if (cbpy < 0) {
             av_log(s->avctx, AV_LOG_ERROR, "cbpy damaged at %d %d\n", s->mb_x, s->mb_y);
@@ -922,7 +925,7 @@ int ff_h263_decode_mb(MpegEncContext *s,
                 goto intra;
             }
 
-            cbpy = get_vlc2(&s->gb, ff_h263_cbpy_vlc.table, CBPY_VLC_BITS, 1);
+            cbpy = get_vlc2(&s->gb, ff_h263_cbpy_vlc->table, CBPY_VLC_BITS, 1);
 
             if (cbpy < 0){
                 av_log(s->avctx, AV_LOG_ERROR, "b cbpy damaged at %d %d\n", s->mb_x, s->mb_y);
@@ -1008,7 +1011,7 @@ int ff_h263_decode_mb(MpegEncContext *s,
         s->current_picture.mb_type[xy] = mb_type;
     } else { /* I-Frame */
         do{
-            cbpc = get_vlc2(&s->gb, ff_h263_intra_MCBPC_vlc.table, INTRA_MCBPC_VLC_BITS, 2);
+            cbpc = get_vlc2(&s->gb, ff_h263_intra_MCBPC_vlc->table, INTRA_MCBPC_VLC_BITS, 2);
             if (cbpc < 0){
                 av_log(s->avctx, AV_LOG_ERROR, "I cbpc damaged at %d %d\n", s->mb_x, s->mb_y);
                 return SLICE_ERROR;
@@ -1033,7 +1036,7 @@ intra:
 
         if(s->pb_frame && get_bits1(&s->gb))
             pb_mv_count = h263_get_modb(&s->gb, s->pb_frame, &cbpb);
-        cbpy = get_vlc2(&s->gb, ff_h263_cbpy_vlc.table, CBPY_VLC_BITS, 1);
+        cbpy = get_vlc2(&s->gb, ff_h263_cbpy_vlc->table, CBPY_VLC_BITS, 1);
         if(cbpy<0){
             av_log(s->avctx, AV_LOG_ERROR, "I cbpy damaged at %d %d\n", s->mb_x, s->mb_y);
             return SLICE_ERROR;
@@ -1366,7 +1369,7 @@ int ff_h263_decode_picture_header(MpegEncContext *s)
     }
 
         ff_h263_show_pict_info(s);
-    if (s->pict_type == AV_PICTURE_TYPE_I && s->codec_tag == (int)AV_RL32("ZYGO") && get_bits_left(&s->gb) >= 85 + 13*3*16 + 50){
+    if (s->pict_type == AV_PICTURE_TYPE_I && s->codec_tag == AV_RL32("ZYGO") && get_bits_left(&s->gb) >= 85 + 13*3*16 + 50){
         int i,j;
         for(i=0; i<85; i++) av_log(s->avctx, AV_LOG_DEBUG, "%d", get_bits1(&s->gb));
         av_log(s->avctx, AV_LOG_DEBUG, "\n");

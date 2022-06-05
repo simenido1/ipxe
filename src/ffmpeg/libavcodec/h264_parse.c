@@ -32,13 +32,13 @@ int ff_h264_pred_weight_table(GetBitContext *gb, const SPS *sps,
                               int picture_structure, void *logctx)
 {
     int list, i, j;
-    int luma_def, chroma_def=0;
+    int luma_def, chroma_def;
 
     pwt->use_weight             = 0;
     pwt->use_weight_chroma      = 0;
 
     pwt->luma_log2_weight_denom = get_ue_golomb_31(gb);
-    if (pwt->luma_log2_weight_denom > 7) {
+    if (pwt->luma_log2_weight_denom > 7U) {
         av_log(logctx, AV_LOG_ERROR, "luma_log2_weight_denom %d is out of range\n", pwt->luma_log2_weight_denom);
         pwt->luma_log2_weight_denom = 0;
     }
@@ -46,7 +46,7 @@ int ff_h264_pred_weight_table(GetBitContext *gb, const SPS *sps,
 
     if (sps->chroma_format_idc) {
         pwt->chroma_log2_weight_denom = get_ue_golomb_31(gb);
-        if (pwt->chroma_log2_weight_denom > 7) {
+        if (pwt->chroma_log2_weight_denom > 7U) {
             av_log(logctx, AV_LOG_ERROR, "chroma_log2_weight_denom %d is out of range\n", pwt->chroma_log2_weight_denom);
             pwt->chroma_log2_weight_denom = 0;
         }
@@ -185,7 +185,7 @@ int ff_h264_check_intra_pred_mode(void *logctx, int top_samples_available,
     static const int8_t top[4]  = { LEFT_DC_PRED8x8, 1, -1, -1 };
     static const int8_t left[5] = { TOP_DC_PRED8x8, -1,  2, -1, DC_128_PRED8x8 };
 
-    if (mode > 3) {
+    if (mode > 3U) {
         av_log(logctx, AV_LOG_ERROR,
                "out of range intra chroma pred mode\n");
         return AVERROR_INVALIDDATA;
@@ -249,13 +249,13 @@ int ff_h264_parse_ref_count(int *plist_count, int ref_count[2],
         else
             list_count = 1;
 
-        if (ref_count[0] - 1 > (int)max[0] || (list_count == 2 && (ref_count[1] - 1 > (int)max[1]))) {
+        if (ref_count[0] - 1 > max[0] || (list_count == 2 && (ref_count[1] - 1 > max[1]))) {
             av_log(logctx, AV_LOG_ERROR, "reference overflow %u > %u or %u > %u\n",
                    ref_count[0] - 1, max[0], ref_count[1] - 1, max[1]);
             ref_count[0] = ref_count[1] = 0;
             *plist_count = 0;
             goto fail;
-        } else if (ref_count[1] - 1 > (int)max[1]) {
+        } else if (ref_count[1] - 1 > max[1]) {
             av_log(logctx, AV_LOG_DEBUG, "reference overflow %u > %u \n",
                    ref_count[1] - 1, max[1]);
             ref_count[1] = 0;

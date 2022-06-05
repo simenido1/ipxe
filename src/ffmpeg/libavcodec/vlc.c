@@ -21,7 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <inttypes.h>
+//#include <inttypes.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -139,7 +139,7 @@ static int build_table(VLC *vlc, int table_nb_bits, int nb_codes,
 {
     int table_size, table_index;
     VLC_TYPE (*table)[2];
-
+    //printf("vlc 142, table_nb_bits=%d\n", table_nb_bits);
     if (table_nb_bits > 30)
        return AVERROR(EINVAL);
     table_size = 1 << table_nb_bits;
@@ -229,7 +229,7 @@ static int vlc_common_end(VLC *vlc, int nb_bits, int nb_codes, VLCcode *codes,
                           int flags, VLCcode localbuf[LOCALBUF_ELEMS])
 {
     int ret = build_table(vlc, nb_bits, nb_codes, codes, flags);
-
+    //printf("vlc 232, ret=%d\n");
     if (flags & INIT_VLC_USE_NEW_STATIC) {
         if (vlc->table_size != vlc->table_allocated &&
             !(flags & (INIT_VLC_STATIC_OVERLONG & ~INIT_VLC_USE_NEW_STATIC)))
@@ -279,9 +279,10 @@ int ff_init_vlc_sparse(VLC *vlc, int nb_bits, int nb_codes,
     int j, ret;
 
     ret = vlc_common_init(vlc, nb_bits, nb_codes, &buf, flags);
-    if (ret < 0)
+    if (ret < 0) {
+        printf("vlc 283, ret=%d\n");
         return ret;
-
+    }
     //av_assert0(symbols_size <= 2 || !symbols);
     j = 0;
 #define COPY(condition)\
@@ -321,8 +322,13 @@ int ff_init_vlc_sparse(VLC *vlc, int nb_bits, int nb_codes,
     COPY(len && len <= nb_bits);
     nb_codes = j;
 
-    return vlc_common_end(vlc, nb_bits, nb_codes, buf,
+    ret = vlc_common_end(vlc, nb_bits, nb_codes, buf,
                           flags, localbuf);
+    if (ret < 0)
+    {
+        printf("vlc 329, ret=%d\n", ret);
+    }
+    return ret;
 }
 
 int ff_init_vlc_from_lengths(VLC *vlc, int nb_bits, int nb_codes,

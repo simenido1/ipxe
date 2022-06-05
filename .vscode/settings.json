@@ -57,6 +57,14 @@
         "h261.h": "c",
         "wmv2.h": "c",
         "wmv2dsp.h": "c",
-        "libm.h": "c"
-    }
+        "libm.h": "c",
+        "image.h": "c",
+        "defaults.h": "c",
+        "cmath": "c",
+        "error.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Enabled",
+    "C_Cpp.intelliSenseEngineFallback": "Enabled",
+    "C_Cpp.vcpkg.enabled": false,
+    "C_Cpp.workspaceSymbols": "All"
 }

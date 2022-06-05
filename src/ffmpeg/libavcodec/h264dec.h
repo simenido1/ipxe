@@ -46,7 +46,7 @@
 #include "mpegutils.h"
 #include "rectangle.h"
 #include "videodsp.h"
-
+#include "libavutil/internal.h"
 #define H264_MAX_PICTURE_COUNT 36
 
 /* Compiling in interlaced support reduces the speed
@@ -659,7 +659,7 @@ static av_always_inline int pred_intra_mode(const H264Context *h,
     const int left   = sl->intra4x4_pred_mode_cache[index8 - 1];
     const int top    = sl->intra4x4_pred_mode_cache[index8 - 8];
     const int min    = FFMIN(left, top);
-    (void)h;
+
     ff_tlog(h->avctx, "mode:%d %d min:%d\n", left, top, min);
 
     if (min < 0)
@@ -717,7 +717,7 @@ static av_always_inline void write_back_motion_list(const H264Context *h,
     AV_COPY128(mv_dst + 2 * b_stride, mv_src + 8 * 2);
     AV_COPY128(mv_dst + 3 * b_stride, mv_src + 8 * 3);
     if (CABAC(h)) {
-        uint8_t (*mvd_dst)[2] = &sl->mvd_table[list][FMO ? (uint32_t)(8 * sl->mb_xy)
+        uint8_t (*mvd_dst)[2] = &sl->mvd_table[list][FMO ? 8 * sl->mb_xy
                                                         : h->mb2br_xy[sl->mb_xy]];
         uint8_t(*mvd_src)[2]  = &sl->mvd_cache[list][scan8[0]];
         if (IS_SKIP(mb_type)) {

@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 #include <string.h>
-//#include <math.h>
+#include <math.h>
 
 #include "display.h"
 #include "libm.h"

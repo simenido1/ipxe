@@ -26,7 +26,6 @@
  */
 
 #include <limits.h>
-#include <string.h>
 
 #include "libavutil/internal.h"
 #include "avcodec.h"
@@ -803,7 +802,7 @@ void ff_er_frame_start(ERContext *s)
 
 static int er_supported(ERContext *s)
 {
-    if((s->avctx->hwaccel && s->avctx->hwaccel->decode_slice)         ||
+    if(s->avctx->hwaccel && s->avctx->hwaccel->decode_slice           ||
        !s->cur_pic.f                                                  ||
        s->cur_pic.field_picture
     )
@@ -949,7 +948,7 @@ void ff_er_frame_end(ERContext *s)
             s->motion_val_buf[i] = av_buffer_allocz((size + 4) * 2 * sizeof(uint16_t));
             if (!s->ref_index_buf[i] || !s->motion_val_buf[i])
                 break;
-            s->cur_pic.ref_index[i]  = (int8_t *)s->ref_index_buf[i]->data;
+            s->cur_pic.ref_index[i]  = s->ref_index_buf[i]->data;
             s->cur_pic.motion_val[i] = (int16_t (*)[2])s->motion_val_buf[i]->data + 4;
         }
         if (i < 2) {
@@ -1203,7 +1202,7 @@ void ff_er_frame_end(ERContext *s)
                     int time_pp = s->pp_time;
                     int time_pb = s->pb_time;
 
-                    //0(s->avctx->codec_id != AV_CODEC_ID_H264);
+                    //av_assert0(s->avctx->codec_id != AV_CODEC_ID_H264);
                     ff_thread_await_progress(s->next_pic.tf, mb_y, 0);
 
                     s->mv[0][0][0] = s->next_pic.motion_val[0][xy][0] *  time_pb            / time_pp;

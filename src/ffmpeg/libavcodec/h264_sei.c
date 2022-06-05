@@ -144,7 +144,7 @@ static int decode_picture_timing(H264SEIPictureTiming *h, GetBitContext *gb,
         av_log(logctx, AV_LOG_ERROR, "Unaligned SEI payload\n");
         return AVERROR_INVALIDDATA;
     }
-    if (size > (int)sizeof(h->payload)) {
+    if (size > sizeof(h->payload)) {
         av_log(logctx, AV_LOG_ERROR, "Picture timing SEI payload too large\n");
         return AVERROR_INVALIDDATA;
     }
@@ -183,7 +183,7 @@ static int decode_registered_user_data_closed_caption(H264SEIA53Caption *h,
 {
     if (size < 3)
         return AVERROR(EINVAL);
-    (void)logctx;
+
     return ff_parse_a53_cc(&h->buf_ref, gb->buffer + get_bits_count(gb) / 8, size);
 }
 
@@ -254,7 +254,7 @@ static int decode_unregistered_user_data(H264SEIUnregistered *h, GetBitContext *
     uint8_t *user_data;
     int e, build, i;
     AVBufferRef *buf_ref, **tmp;
-    (void)logctx;
+
     if (size < 16 || size >= INT_MAX - 1)
         return AVERROR_INVALIDDATA;
 
@@ -275,10 +275,10 @@ static int decode_unregistered_user_data(H264SEIUnregistered *h, GetBitContext *
     buf_ref->size = size;
     h->buf_ref[h->nb_buf_ref++] = buf_ref;
 
-    e = sscanf((char *)(user_data + 16), "x264 - core %d", &build);
+    e = sscanf(user_data + 16, "x264 - core %d", &build);
     if (e == 1 && build > 0)
         h->x264_build = build;
-    if (e == 1 && build == 1 && !strncmp((char *)(user_data+16), "x264 - core 0000", 16))
+    if (e == 1 && build == 1 && !strncmp(user_data+16, "x264 - core 0000", 16))
         h->x264_build = 67;
 
     return 0;
@@ -483,7 +483,7 @@ int ff_h264_sei_decode(H264SEIContext *h, GetBitContext *gb,
             size += show_bits(gb, 8);
         } while (get_bits(gb, 8) == 255);
 
-        if ((int)size > get_bits_left(gb) / 8) {
+        if (size > get_bits_left(gb) / 8) {
             av_log(logctx, AV_LOG_ERROR, "SEI type %d size %d truncated at %d\n",
                    type, 8*size, get_bits_left(gb));
             return AVERROR_INVALIDDATA;

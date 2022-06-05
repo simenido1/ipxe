@@ -83,7 +83,7 @@ typedef struct AVDetectionBBoxHeader {
 static av_always_inline AVDetectionBBox *
 av_get_detection_bbox(const AVDetectionBBoxHeader *header, unsigned int idx)
 {
-    av_assert0(idx < header->nb_bboxes);
+    //av_assert0(idx < header->nb_bboxes);
     return (AVDetectionBBox *)((uint8_t *)header + header->bboxes_offset +
                                idx * header->bbox_size);
 }

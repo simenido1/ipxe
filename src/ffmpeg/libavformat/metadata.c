@@ -59,7 +59,7 @@ void ff_metadata_conv(AVDictionary **pm, const AVMetadataConv *d_conv,
 void ff_metadata_conv_ctx(AVFormatContext *ctx, const AVMetadataConv *d_conv,
                                                 const AVMetadataConv *s_conv)
 {
-    unsigned int i;
+    int i;
     ff_metadata_conv(&ctx->metadata, d_conv, s_conv);
     for (i=0; i<ctx->nb_streams ; i++)
         ff_metadata_conv(&ctx->streams [i]->metadata, d_conv, s_conv);

@@ -26,7 +26,6 @@
 #include "mpegvideo.h"
 #include "mpeg4video.h"
 #include "mpeg4data.h"
-#include <string.h>
 
 static av_cold void mpeg4_init_rl_intra(void)
 {

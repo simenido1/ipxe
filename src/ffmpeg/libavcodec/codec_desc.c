@@ -1863,6 +1863,13 @@ static const AVCodecDescriptor codec_descriptors[] = {
         .long_name = NULL_IF_CONFIG_SMALL("GEM Raster image"),
         .props     = AV_CODEC_PROP_LOSSY,
     },
+    {
+        .id        = AV_CODEC_ID_VBN,
+        .type      = AVMEDIA_TYPE_VIDEO,
+        .name      = "vbn",
+        .long_name = NULL_IF_CONFIG_SMALL("Vizrt Binary Image"),
+        .props     = AV_CODEC_PROP_LOSSY,
+    },
 
     /* various PCM "codecs" */
     {
@@ -3536,7 +3543,7 @@ const AVCodecDescriptor *avcodec_descriptor_next(const AVCodecDescriptor *prev)
 {
     if (!prev)
         return &codec_descriptors[0];
-    if (prev - codec_descriptors < (int)FF_ARRAY_ELEMS(codec_descriptors) - 1)
+    if (prev - codec_descriptors < FF_ARRAY_ELEMS(codec_descriptors) - 1)
         return prev + 1;
     return NULL;
 }

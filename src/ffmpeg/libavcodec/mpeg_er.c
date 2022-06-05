@@ -19,7 +19,6 @@
 #include "error_resilience.h"
 #include "mpegvideo.h"
 #include "mpeg_er.h"
-#include <string.h>
 
 static void set_erpic(ERPicture *dst, Picture *src)
 {
@@ -121,7 +120,7 @@ int ff_mpeg_er_init(MpegEncContext *s)
     er->mbskip_table  = s->mbskip_table;
     er->mbintra_table = s->mbintra_table;
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(s->dc_val); i++)
+    for (i = 0; i < FF_ARRAY_ELEMS(s->dc_val); i++)
         er->dc_val[i] = s->dc_val[i];
 
     er->decode_mb = mpeg_er_decode_mb;

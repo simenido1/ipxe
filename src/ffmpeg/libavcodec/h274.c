@@ -29,7 +29,6 @@
 #include "libavutil/imgutils.h"
 
 #include "h274.h"
-#include <string.h>
 
 static const int8_t Gaussian_LUT[2048+4];
 static const uint32_t Seed_LUT[256];

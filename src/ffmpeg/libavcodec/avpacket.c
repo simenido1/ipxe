@@ -121,7 +121,7 @@ int av_grow_packet(AVPacket *pkt, int grow_by)
 {
     int new_size;
     //av_assert0((unsigned)pkt->size <= INT_MAX - AV_INPUT_BUFFER_PADDING_SIZE);
-    if (grow_by >
+    if ((unsigned)grow_by >
         INT_MAX - (pkt->size + AV_INPUT_BUFFER_PADDING_SIZE))
         return AVERROR(ENOMEM);
 
@@ -134,7 +134,7 @@ int av_grow_packet(AVPacket *pkt, int grow_by)
             pkt->data = pkt->buf->data;
         } else {
             data_offset = pkt->data - pkt->buf->data;
-            if ((int)data_offset > INT_MAX - new_size)
+            if (data_offset > INT_MAX - new_size)
                 return AVERROR(ENOMEM);
         }
 
@@ -144,7 +144,7 @@ int av_grow_packet(AVPacket *pkt, int grow_by)
 
             // allocate slightly more than requested to avoid excessive
             // reallocations
-            if (new_size + (int)data_offset < INT_MAX - new_size/16)
+            if (new_size + data_offset < INT_MAX - new_size/16)
                 new_size += new_size/16;
 
             ret = av_buffer_realloc(&pkt->buf, new_size + data_offset);
@@ -300,7 +300,6 @@ const char *av_packet_side_data_name(enum AVPacketSideDataType type)
     case AV_PKT_DATA_DOVI_CONF:                  return "DOVI configuration record";
     case AV_PKT_DATA_S12M_TIMECODE:              return "SMPTE ST 12-1:2014 timecode";
     case AV_PKT_DATA_DYNAMIC_HDR10_PLUS:         return "HDR10+ Dynamic Metadata (SMPTE 2094-40)";
-    default: break;
     }
     return NULL;
 }
@@ -353,15 +352,15 @@ int av_packet_unpack_dictionary(const uint8_t *data, size_t size,
         return AVERROR_INVALIDDATA;
     while (data < end) {
         const uint8_t *key = data;
-        const uint8_t *val = data + strlen((char *)key) + 1;
+        const uint8_t *val = data + strlen(key) + 1;
 
         if (val >= end || !*key)
             return AVERROR_INVALIDDATA;
 
-        ret = av_dict_set(dict, (char *)key, (char *)val, 0);
+        ret = av_dict_set(dict, key, val, 0);
         if (ret < 0)
             return ret;
-        data = val + strlen((char *)val) + 1;
+        data = val + strlen(val) + 1;
     }
 
     return 0;
@@ -539,7 +538,6 @@ int avpriv_packet_list_put(PacketList *packet_buffer,
                            int (*copy)(AVPacket *dst, const AVPacket *src),
                            int flags)
 {
-    (void)flags;
     PacketListEntry *pktl = av_malloc(sizeof(*pktl));
     int ret;
 
@@ -614,7 +612,7 @@ int ff_side_data_set_encoder_stats(AVPacket *pkt, int quality, int64_t *error, i
                                             side_data_size);
     }
 
-    if (!side_data || (int)side_data_size < 4+4+8*error_count)
+    if (!side_data || side_data_size < 4+4+8*error_count)
         return AVERROR(ENOMEM);
 
     AV_WL32(side_data   , quality  );

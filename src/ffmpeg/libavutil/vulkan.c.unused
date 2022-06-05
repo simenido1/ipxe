@@ -118,7 +118,7 @@ void ff_vk_qf_init(FFVulkanContext *s, FFVkQueueFamilyCtx *qf,
         qf->actual_queues = s->hwctx->nb_decode_queues;
         break;
     default:
-        av_assert0(0); /* Should never happen */
+      //avassert0(0); /* Should never happen */
     }
 
     if (!nb_queues)

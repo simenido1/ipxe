@@ -21,7 +21,7 @@
  * misc image utilities
  */
 
-//#include "avassert.h"
+#include "avassert.h"
 #include "common.h"
 #include "imgutils.h"
 #include "imgutils_internal.h"
@@ -31,7 +31,6 @@
 #include "mathematics.h"
 #include "pixdesc.h"
 #include "rational.h"
-#include <string.h>
 
 void av_image_fill_max_pixsteps(int max_pixsteps[4], int max_pixstep_comps[4],
                                 const AVPixFmtDescriptor *pixdesc)
@@ -57,7 +56,7 @@ int image_get_linesize(int width, int plane,
                        const AVPixFmtDescriptor *desc)
 {
     int s, shifted_w, linesize;
-    (void)plane;
+
     if (!desc)
         return AVERROR(EINVAL);
 
@@ -120,7 +119,7 @@ int av_image_fill_plane_sizes(size_t sizes[4], enum AVPixelFormat pix_fmt,
     if (!desc || desc->flags & AV_PIX_FMT_FLAG_HWACCEL)
         return AVERROR(EINVAL);
 
-    if ((uint64_t)linesizes[0] > SIZE_MAX / height)
+    if (linesizes[0] > SIZE_MAX / height)
         return AVERROR(EINVAL);
     sizes[0] = linesizes[0] * (size_t)height;
 
@@ -135,7 +134,7 @@ int av_image_fill_plane_sizes(size_t sizes[4], enum AVPixelFormat pix_fmt,
     for (i = 1; i < 4 && has_plane[i]; i++) {
         int h, s = (i == 1 || i == 2) ? desc->log2_chroma_h : 0;
         h = (height + (1 << s) - 1) >> s;
-        if ((uint64_t)linesizes[i] > SIZE_MAX / h)
+        if (linesizes[i] > SIZE_MAX / h)
             return AVERROR(EINVAL);
         sizes[i] = (size_t)h * linesizes[i];
     }
@@ -161,7 +160,7 @@ int av_image_fill_pointers(uint8_t *data[4], enum AVPixelFormat pix_fmt, int hei
 
     ret = 0;
     for (i = 0; i < 4; i++) {
-        if ((int)sizes[i] > INT_MAX - ret)
+        if (sizes[i] > INT_MAX - ret)
             return AVERROR(EINVAL);
         ret += sizes[i];
     }
@@ -492,7 +491,7 @@ int av_image_get_buffer_size(enum AVPixelFormat pix_fmt,
 
     ret = 0;
     for (i = 0; i < 4; i++) {
-        if ((int)sizes[i] > INT_MAX - ret)
+        if (sizes[i] > INT_MAX - ret)
             return AVERROR(EINVAL);
         ret += sizes[i];
     }
@@ -508,6 +507,7 @@ int av_image_copy_to_buffer(uint8_t *dst, int dst_size,
     int i, j, nb_planes = 0, linesize[4];
     int size = av_image_get_buffer_size(pix_fmt, width, height, align);
     const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(pix_fmt);
+    int ret;
 
     if (size > dst_size || size < 0 || !desc)
         return AVERROR(EINVAL);
@@ -517,7 +517,7 @@ int av_image_copy_to_buffer(uint8_t *dst, int dst_size,
 
     nb_planes++;
 
-    av_image_fill_linesizes(linesize, pix_fmt, width);
+    ret = av_image_fill_linesizes(linesize, pix_fmt, width);
     //av_assert0(ret >= 0); // was checked previously
 
     for (i = 0; i < nb_planes; i++) {
@@ -556,7 +556,7 @@ static void memset_bytes(uint8_t *dst, size_t dst_size, uint8_t *clear,
         return;
 
     // Reduce to memset() if possible.
-    for (i = 0; i < (int)clear_size; i++) {
+    for (i = 0; i < clear_size; i++) {
         if (clear[i] != clear[0]) {
             same = 0;
             break;

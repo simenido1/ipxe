@@ -27,12 +27,11 @@
 
 #include "ffmpeg_config.h"
 #include "libavutil/attributes.h"
-//#include "libavutil/avassert.h"
+#include "libavutil/avassert.h"
 #include "libavutil/intreadwrite.h"
 #include "codec_id.h"
 #include "h264pred.h"
 #include "mathops.h"
-#include <string.h>
 
 #define BIT_DEPTH 8
 #include "h264pred_template.c"

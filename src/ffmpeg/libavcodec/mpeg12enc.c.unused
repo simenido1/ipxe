@@ -410,7 +410,7 @@ static void mpeg1_encode_sequence_header(MpegEncContext *s)
 
     mpeg12->gop_picture_number = s->current_picture_ptr->f->coded_picture_number;
 
-    av_assert0(mpeg12->drop_frame_timecode == !!(mpeg12->tc.flags & AV_TIMECODE_FLAG_DROPFRAME));
+  //avassert0(mpeg12->drop_frame_timecode == !!(mpeg12->tc.flags & AV_TIMECODE_FLAG_DROPFRAME));
     if (mpeg12->drop_frame_timecode)
         time_code = av_timecode_adjust_ntsc_framenum2(time_code, fps);
 
@@ -511,7 +511,7 @@ void ff_mpeg1_encode_picture_header(MpegEncContext *s, int picture_number)
         }
         put_bits(&s->pb, 2, s->intra_dc_precision);
 
-        av_assert0(s->picture_structure == PICT_FRAME);
+      //avassert0(s->picture_structure == PICT_FRAME);
         put_bits(&s->pb, 2, s->picture_structure);
         if (s->progressive_sequence)
             put_bits(&s->pb, 1, 0);             /* no repeat */
@@ -821,7 +821,7 @@ static av_always_inline void mpeg1_encode_mb_internal(MpegEncContext *s,
         }
     } else {
         if (first_mb) {
-            av_assert0(s->mb_skip_run == 0);
+          //avassert0(s->mb_skip_run == 0);
             encode_mb_skip_run(s, s->mb_x);
         } else {
             encode_mb_skip_run(s, s->mb_skip_run);

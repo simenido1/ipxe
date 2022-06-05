@@ -61,7 +61,6 @@
 // #else
 //     return -1;
 // #endif
-//     return -1;
 // }
 
 static uint32_t get_generic_seed(void)

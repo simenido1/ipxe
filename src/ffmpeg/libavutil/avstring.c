@@ -27,7 +27,7 @@
 
 #include "ffmpeg_config.h"
 #include "mem.h"
-//#include "avassert.h"
+#include "avassert.h"
 #include "avstring.h"
 #include "bprint.h"
 #include "error.h"

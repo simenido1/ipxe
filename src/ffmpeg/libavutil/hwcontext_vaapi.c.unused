@@ -503,7 +503,7 @@ static AVBufferRef *vaapi_pool_alloc(void *opaque, size_t size)
     if (hwfc->initial_pool_size > 0) {
         // This is a fixed-size pool, so we must still be in the initial
         // allocation sequence.
-        av_assert0(avfc->nb_surfaces < hwfc->initial_pool_size);
+      //avassert0(avfc->nb_surfaces < hwfc->initial_pool_size);
         avfc->surface_ids[avfc->nb_surfaces] = surface_id;
         ++avfc->nb_surfaces;
     }
@@ -569,7 +569,7 @@ static int vaapi_frames_init(AVHWFramesContext *hwfc)
                     .value.value.i = desc->fourcc,
                 };
             }
-            av_assert0(i == ctx->nb_attributes);
+          //avassert0(i == ctx->nb_attributes);
         } else {
             ctx->attributes = NULL;
             ctx->nb_attributes = 0;
@@ -713,7 +713,7 @@ static int vaapi_transfer_get_formats(AVHWFramesContext *hwfc,
     for (i = 0; i < ctx->nb_formats; i++) {
         if (ctx->formats[i].pix_fmt == hwfc->sw_format)
             continue;
-        av_assert0(k < ctx->nb_formats);
+      //avassert0(k < ctx->nb_formats);
         pix_fmts[k++] = ctx->formats[i].pix_fmt;
     }
     pix_fmts[k] = AV_PIX_FMT_NONE;
@@ -1093,7 +1093,7 @@ static int vaapi_map_from_drm(AVHWFramesContext *src_fc, AVFrame *dst,
            "%08x.\n", desc->objects[0].fd, va_fourcc);
 
     format_desc = vaapi_format_from_fourcc(va_fourcc);
-    av_assert0(format_desc);
+  //avassert0(format_desc);
 
 #if VA_CHECK_VERSION(1, 1, 0)
     use_prime2 = !src_vafc->prime_2_import_unsupported &&

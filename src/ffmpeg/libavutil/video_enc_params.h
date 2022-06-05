@@ -22,7 +22,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-//#include "libavutil/avassert.h"
+#include "libavutil/avassert.h"
 #include "libavutil/frame.h"
 
 enum AVVideoEncParamsType {

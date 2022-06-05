@@ -27,7 +27,6 @@
  */
 
 #include <float.h>
-#include <string.h>
 #include "attributes.h"
 #include "avutil.h"
 #include "common.h"
@@ -36,11 +35,11 @@
 #include "internal.h"
 #include "avutil_log.h"
 #include "mathematics.h"
-#include "avutil_time.h"
+#include "time.h"
 #include "avstring.h"
 #include "timer.h"
 #include "reverse.h"
-
+#include "libavutil/avutil_time.h"
 typedef struct Parser {
     const AVClass *class;
     int stack_index;
@@ -143,7 +142,7 @@ double av_strtod(const char *numstr, char **tail)
     return d;
 }
 
-#define IS_IDENTIFIER_CHAR(c) ((c) - '0' <= 9 || (c) - 'a' <= 25 || (c) - 'A' <= 25 || (c) == '_')
+#define IS_IDENTIFIER_CHAR(c) ((c) - '0' <= 9U || (c) - 'a' <= 25U || (c) - 'A' <= 25U || (c) == '_')
 
 static int strmatch(const char *s, const char *prefix)
 {
@@ -179,7 +178,6 @@ struct AVExpr {
 
 static double etime(double v)
 {
-    (void)v;
     return av_gettime() * 0.000001;
 }
 
@@ -327,7 +325,6 @@ static double eval_expr(Parser *p, AVExpr *e)
                 case e_atan2:return e->value * atan2(d, d2);
                 case e_bitand: return isnan(d) || isnan(d2) ? NAN : e->value * ((long int)d & (long int)d2);
                 case e_bitor:  return isnan(d) || isnan(d2) ? NAN : e->value * ((long int)d | (long int)d2);
-                default: break;
             }
         }
     }
@@ -375,7 +372,7 @@ static int parse_primary(AVExpr **e, Parser *p)
             return 0;
         }
     }
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(constants); i++) {
+    for (i = 0; i < FF_ARRAY_ELEMS(constants); i++) {
         if (strmatch(p->s, constants[i].name)) {
             p->s += strlen(constants[i].name);
             d->type = e_value;
@@ -747,10 +744,10 @@ static int expr_count(AVExpr *e, unsigned *counter, int size, int type)
     if (!e || !counter || !size)
         return AVERROR(EINVAL);
 
-    for (i = 0; (int)e->type != type && i < 3 && e->param[i]; i++)
+    for (i = 0; e->type != type && i < 3 && e->param[i]; i++)
         expr_count(e->param[i], counter, size, type);
 
-    if ((int)e->type == type && e->const_index < size)
+    if (e->type == type && e->const_index < size)
         counter[e->const_index]++;
 
     return 0;

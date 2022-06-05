@@ -32,7 +32,7 @@
 int ff_tis_ifd(unsigned tag)
 {
     int i;
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(ifd_tags); i++) {
+    for (i = 0; i < FF_ARRAY_ELEMS(ifd_tags); i++) {
         if (ifd_tags[i] == tag) {
             return i + 1;
         }
@@ -103,9 +103,9 @@ int ff_tadd_rational_metadata(int count, const char *name, const char *sep,
     int32_t nom, denom;
     int i;
 
-    if (count >= (int)(INT_MAX / sizeof(int64_t)) || count <= 0)
+    if (count >= INT_MAX / sizeof(int64_t) || count <= 0)
         return AVERROR_INVALIDDATA;
-    if (bytestream2_get_bytes_left(gb) < count * (int)sizeof(int64_t))
+    if (bytestream2_get_bytes_left(gb) < count * sizeof(int64_t))
         return AVERROR_INVALIDDATA;
 
     av_bprint_init(&bp, 10 * count, AV_BPRINT_SIZE_UNLIMITED);
@@ -126,9 +126,9 @@ int ff_tadd_long_metadata(int count, const char *name, const char *sep,
     AVBPrint bp;
     int i;
 
-    if (count >= (int)(INT_MAX / sizeof(int32_t)) || count <= 0)
+    if (count >= INT_MAX / sizeof(int32_t) || count <= 0)
         return AVERROR_INVALIDDATA;
-    if (bytestream2_get_bytes_left(gb) < count * (int)sizeof(int32_t))
+    if (bytestream2_get_bytes_left(gb) < count * sizeof(int32_t))
         return AVERROR_INVALIDDATA;
 
     av_bprint_init(&bp, 10 * count, AV_BPRINT_SIZE_UNLIMITED);
@@ -147,9 +147,9 @@ int ff_tadd_doubles_metadata(int count, const char *name, const char *sep,
     AVBPrint bp;
     int i;
 
-    if (count >= (int)(INT_MAX / sizeof(int64_t)) || count <= 0)
+    if (count >= INT_MAX / sizeof(int64_t) || count <= 0)
         return AVERROR_INVALIDDATA;
-    if (bytestream2_get_bytes_left(gb) < count * (int)sizeof(int64_t))
+    if (bytestream2_get_bytes_left(gb) < count * sizeof(int64_t))
         return AVERROR_INVALIDDATA;
 
     av_bprint_init(&bp, 10 * count, 100 * count);
@@ -168,15 +168,15 @@ int ff_tadd_shorts_metadata(int count, const char *name, const char *sep,
     AVBPrint bp;
     int i;
 
-    if (count >= (int)(INT_MAX / sizeof(int16_t)) || count <= 0)
+    if (count >= INT_MAX / sizeof(int16_t) || count <= 0)
         return AVERROR_INVALIDDATA;
-    if (bytestream2_get_bytes_left(gb) < count * (int)sizeof(int16_t))
+    if (bytestream2_get_bytes_left(gb) < count * sizeof(int16_t))
         return AVERROR_INVALIDDATA;
 
     av_bprint_init(&bp, 10 * count, AV_BPRINT_SIZE_UNLIMITED);
 
     for (i = 0; i < count; i++) {
-        int v = is_signed ? /* (int16_t) */ff_tget_short(gb, le) :  ff_tget_short(gb, le);
+        int v = is_signed ? (int16_t)ff_tget_short(gb, le) :  ff_tget_short(gb, le);
         av_bprintf(&bp, "%s%5i", auto_sep(count, sep, i, 8), v);
     }
 
@@ -189,16 +189,16 @@ int ff_tadd_bytes_metadata(int count, const char *name, const char *sep,
 {
     AVBPrint bp;
     int i;
-    (void)le;
-    if (count >= (int)(INT_MAX / sizeof(int8_t)) || count < 0)
+
+    if (count >= INT_MAX / sizeof(int8_t) || count < 0)
         return AVERROR_INVALIDDATA;
-    if (bytestream2_get_bytes_left(gb) < count * (int)sizeof(int8_t))
+    if (bytestream2_get_bytes_left(gb) < count * sizeof(int8_t))
         return AVERROR_INVALIDDATA;
 
     av_bprint_init(&bp, 10 * count, AV_BPRINT_SIZE_UNLIMITED);
 
     for (i = 0; i < count; i++) {
-        int v = is_signed ? /* (int8_t) */bytestream2_get_byte(gb) :  bytestream2_get_byte(gb);
+        int v = is_signed ? (int8_t)bytestream2_get_byte(gb) :  bytestream2_get_byte(gb);
         av_bprintf(&bp, "%s%3i", auto_sep(count, sep, i, 16), v);
     }
 
@@ -209,7 +209,7 @@ int ff_tadd_string_metadata(int count, const char *name,
                             GetByteContext *gb, int le, AVDictionary **metadata)
 {
     char *value;
-    (void)le;
+
     if (bytestream2_get_bytes_left(gb) < count || count < 0)
         return AVERROR_INVALIDDATA;
 
@@ -217,7 +217,7 @@ int ff_tadd_string_metadata(int count, const char *name,
     if (!value)
         return AVERROR(ENOMEM);
 
-    bytestream2_get_bufferu(gb, (unsigned char *)value, count);
+    bytestream2_get_bufferu(gb, value, count);
     value[count] = 0;
 
     av_dict_set(metadata, name, value, AV_DICT_DONT_STRDUP_VAL);

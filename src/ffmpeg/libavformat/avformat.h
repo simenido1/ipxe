@@ -1949,7 +1949,7 @@ const AVClass *av_stream_get_class(void);
  *
  * @return newly created stream or NULL on error.
  */
-AVStream *avformat_new_stream(AVFormatContext *s);
+AVStream *avformat_new_stream(AVFormatContext *s, const AVCodec *c);
 
 /**
  * Wrap an existing array as stream side data.
@@ -2172,7 +2172,8 @@ int av_find_best_stream(AVFormatContext *ic,
                         enum AVMediaType type,
                         int wanted_stream_nb,
                         int related_stream,
-                        const AVCodec **decoder_ret);
+                        const AVCodec **decoder_ret,
+                        int flags);
 
 /**
  * Return the next frame of a stream.
@@ -2834,19 +2835,22 @@ const struct AVCodecTag *avformat_get_mov_audio_tags(void);
  * otherwise use the frame aspect ratio. This way a container setting, which is
  * usually easy to modify can override the coded value in the frames.
  *
+ * @param format the format context which the stream is part of
  * @param stream the stream which the frame is part of
  * @param frame the frame with the aspect ratio to be determined
  * @return the guessed (valid) sample_aspect_ratio, 0/1 if no idea
  */
-AVRational av_guess_sample_aspect_ratio(AVStream *stream, AVFrame *frame);
+AVRational av_guess_sample_aspect_ratio(AVFormatContext *format, AVStream *stream, AVFrame *frame);
 
 /**
  * Guess the frame rate, based on both the container and codec information.
  *
+ * @param ctx the format context which the stream is part of
  * @param stream the stream which the frame is part of
+ * @param frame the frame for which the frame rate should be determined, may be NULL
  * @return the guessed (valid) frame rate, 0/1 if no idea
  */
-AVRational av_guess_frame_rate(AVStream *stream);
+AVRational av_guess_frame_rate(AVFormatContext *ctx, AVStream *stream, AVFrame *frame);
 
 /**
  * Check if the stream st contained in s is matched by the stream specifier

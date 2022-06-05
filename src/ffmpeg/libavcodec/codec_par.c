@@ -167,8 +167,6 @@ FF_ENABLE_DEPRECATION_WARNINGS
         par->width  = codec->width;
         par->height = codec->height;
         break;
-    default:
-        break;
     }
 
     if (codec->extradata) {
@@ -250,8 +248,6 @@ FF_ENABLE_DEPRECATION_WARNINGS
     case AVMEDIA_TYPE_SUBTITLE:
         codec->width  = par->width;
         codec->height = par->height;
-        break;
-    default:
         break;
     }
 

@@ -41,8 +41,7 @@
 #include "internal.h"
 #include "id3v1.h"
 #include "id3v2.h"
-#include <string.h>
-
+#include "libavutil/internal.h"
 const AVMetadataConv ff_id3v2_34_metadata_conv[] = {
     { "TALB", "album"        },
     { "TCOM", "composer"     },
@@ -209,7 +208,7 @@ static int check_tag(AVIOContext *s, int offset, unsigned int len)
 
     if (len > 4 ||
         avio_seek(s, offset, SEEK_SET) < 0 ||
-        avio_read(s, (unsigned char *)tag, len) < (int)len)
+        avio_read(s, tag, len) < (int)len)
         return -1;
     else if (!AV_RB32(tag) || is_tag(tag, len))
         return 1;
@@ -337,13 +336,13 @@ static void read_ttag(AVFormatContext *s, AVIOContext *pb, int taglen,
     }
 
     if (!(strcmp(key, "TCON") && strcmp(key, "TCO"))                         &&
-        (sscanf((char *)dst, "(%d)", &genre) == 1 || sscanf((char *)dst, "%d", &genre) == 1) &&
+        (sscanf(dst, "(%d)", &genre) == 1 || sscanf(dst, "%d", &genre) == 1) &&
         genre <= ID3v1_GENRE_MAX) {
         av_freep(&dst);
-        dst = (uint8_t *)av_strdup(ff_id3v1_genre_str[genre]);
+        dst = av_strdup(ff_id3v1_genre_str[genre]);
     } else if (!(strcmp(key, "TXXX") && strcmp(key, "TXX"))) {
         /* dst now contains the key, need to get value */
-        key = (char *)dst;
+        key = dst;
         if (decode_str(s, pb, encoding, &dst, &taglen) < 0) {
             av_log(s, AV_LOG_ERROR, "Error reading frame %s, skipped\n", key);
             av_freep(&key);
@@ -354,7 +353,7 @@ static void read_ttag(AVFormatContext *s, AVIOContext *pb, int taglen,
         av_freep(&dst);
 
     if (dst)
-        av_dict_set(metadata, key, (char *)dst, dict_flags);
+        av_dict_set(metadata, key, dst, dict_flags);
 }
 
 static void read_uslt(AVFormatContext *s, AVIOContext *pb, int taglen,
@@ -393,7 +392,7 @@ static void read_uslt(AVFormatContext *s, AVIOContext *pb, int taglen,
         goto error;
     }
 
-    av_dict_set(metadata, key, (char *)text,
+    av_dict_set(metadata, key, text,
                 AV_DICT_DONT_STRDUP_KEY | AV_DICT_DONT_STRDUP_VAL);
 
     ok = 1;
@@ -464,7 +463,6 @@ static void list_append(ID3v2ExtraMeta *new_elem, ExtraMetaList *list)
 static void read_geobtag(AVFormatContext *s, AVIOContext *pb, int taglen,
                          const char *tag, ExtraMetaList *extra_meta, int isv34)
 {
-    (void)isv34;
     ID3v2ExtraMetaGEOB *geob_data = NULL;
     ID3v2ExtraMeta *new_extra     = NULL;
     char encoding;
@@ -475,8 +473,8 @@ static void read_geobtag(AVFormatContext *s, AVIOContext *pb, int taglen,
 
     new_extra = av_mallocz(sizeof(ID3v2ExtraMeta));
     if (!new_extra) {
-        // av_log(s, AV_LOG_ERROR, "Failed to alloc %"SIZE_SPECIFIER" bytes\n",
-        //        sizeof(ID3v2ExtraMeta));
+        av_log(s, AV_LOG_ERROR, "Failed to alloc %"SIZE_SPECIFIER" bytes\n",
+               sizeof(ID3v2ExtraMeta));
         return;
     }
 
@@ -509,7 +507,7 @@ static void read_geobtag(AVFormatContext *s, AVIOContext *pb, int taglen,
             av_log(s, AV_LOG_ERROR, "Failed to alloc %d bytes\n", taglen);
             goto fail;
         }
-        if ((int)(len = avio_read(pb, geob_data->data, taglen)) < taglen)
+        if ((len = avio_read(pb, geob_data->data, taglen)) < taglen)
             av_log(s, AV_LOG_WARNING,
                    "Error reading GEOB frame, data truncated.\n");
         geob_data->datasize = len;
@@ -596,7 +594,6 @@ static void rstrip_spaces(char *buf)
 static void read_apic(AVFormatContext *s, AVIOContext *pb, int taglen,
                       const char *tag, ExtraMetaList *extra_meta, int isv34)
 {
-    (void)tag;
     int enc, pic_type;
     char mimetype[64] = {0};
     const CodecMime *mime     = ff_id3v2_mime_tags;
@@ -624,7 +621,7 @@ static void read_apic(AVFormatContext *s, AVIOContext *pb, int taglen,
             goto fail;
         taglen -= ret;
     } else {
-        if (avio_read(pb, (unsigned char *)mimetype, 3) < 0)
+        if (avio_read(pb, mimetype, 3) < 0)
             goto fail;
 
         mimetype[3] = 0;
@@ -648,7 +645,7 @@ static void read_apic(AVFormatContext *s, AVIOContext *pb, int taglen,
     /* picture type */
     pic_type = avio_r8(pb);
     taglen--;
-    if (pic_type < 0 || pic_type >= (int)FF_ARRAY_ELEMS(ff_id3v2_picture_types)) {
+    if (pic_type < 0 || pic_type >= FF_ARRAY_ELEMS(ff_id3v2_picture_types)) {
         av_log(s, AV_LOG_WARNING, "Unknown attached picture type %d.\n",
                pic_type);
         pic_type = 0;
@@ -671,7 +668,7 @@ static void read_apic(AVFormatContext *s, AVIOContext *pb, int taglen,
 
     // The description must be unique, and some ID3v2 tag writers add spaces
     // to write several APIC entries with the same description.
-    rstrip_spaces((char *)apic->description);
+    rstrip_spaces(apic->description);
     list_append(new_extra, extra_meta);
 
     return;
@@ -695,8 +692,6 @@ static void read_chapter(AVFormatContext *s, AVIOContext *pb, int len,
 {
     int taglen;
     char tag[5];
-    (void)ttag;
-    (void)isv34;
     ID3v2ExtraMeta *new_extra = NULL;
     ID3v2ExtraMetaCHAP *chap  = NULL;
 
@@ -718,7 +713,7 @@ static void read_chapter(AVFormatContext *s, AVIOContext *pb, int len,
 
     len -= 16;
     while (len > 10) {
-        if (avio_read(pb, (unsigned char *)tag, 4) < 4)
+        if (avio_read(pb, tag, 4) < 4)
             goto fail;
         tag[4] = 0;
         taglen = avio_rb32(pb);
@@ -758,8 +753,7 @@ static void read_priv(AVFormatContext *s, AVIOContext *pb, int taglen,
 {
     ID3v2ExtraMeta *meta;
     ID3v2ExtraMetaPRIV *priv;
-    (void)tag;
-    (void)isv34;
+
     meta = av_mallocz(sizeof(*meta));
     if (!meta)
         return;
@@ -775,7 +769,7 @@ static void read_priv(AVFormatContext *s, AVIOContext *pb, int taglen,
 
     priv->datasize = taglen;
 
-    if (avio_read(pb, priv->data, priv->datasize) != (int)priv->datasize)
+    if (avio_read(pb, priv->data, priv->datasize) != priv->datasize)
         goto fail;
 
     meta->tag   = "PRIV";
@@ -900,7 +894,7 @@ static void id3v2_parse(AVIOContext *pb, AVDictionary **metadata,
         unsigned long av_unused dlen;
 
         if (isv34) {
-            if (avio_read(pb, (unsigned char *)tag, 4) < 4)
+            if (avio_read(pb, tag, 4) < 4)
                 break;
             tag[4] = 0;
             if (version == 3) {
@@ -910,7 +904,7 @@ static void id3v2_parse(AVIOContext *pb, AVDictionary **metadata,
                  * so check the next tag to see which one to use */
                 tlen = avio_rb32(pb);
                 if (tlen > 0x7f) {
-                    if ((int)tlen < len) {
+                    if (tlen < len) {
                         int64_t cur = avio_tell(pb);
 
                         if (ffio_ensure_seekback(pb, 2 /* tflags */ + tlen + 4 /* next tag */))
@@ -928,7 +922,7 @@ static void id3v2_parse(AVIOContext *pb, AVDictionary **metadata,
             tflags  = avio_rb16(pb);
             tunsync = tflags & ID3v2_FLAG_UNSYNCH;
         } else {
-            if (avio_read(pb, (unsigned char *)tag, 3) < 3)
+            if (avio_read(pb, tag, 3) < 3)
                 break;
             tag[3] = 0;
             tlen   = avio_rb24(pb);
@@ -981,7 +975,7 @@ static void id3v2_parse(AVIOContext *pb, AVDictionary **metadata,
             pbx = pb;
 
             if (unsync || tunsync || tcomp) {
-                av_fast_malloc(&buffer, (unsigned int *)&buffer_size, tlen);
+                av_fast_malloc(&buffer, &buffer_size, tlen);
                 if (!buffer) {
                     av_log(s, AV_LOG_ERROR, "Failed to alloc %d bytes\n", tlen);
                     goto seek;
@@ -992,7 +986,7 @@ static void id3v2_parse(AVIOContext *pb, AVDictionary **metadata,
                 uint8_t *t = buffer;
                 uint8_t *end = t + tlen;
 
-                if (avio_read(pb, buffer, tlen) != (int)tlen) {
+                if (avio_read(pb, buffer, tlen) != tlen) {
                     av_log(s, AV_LOG_ERROR, "Failed to read tag data\n");
                     goto seek;
                 }
@@ -1184,7 +1178,7 @@ int ff_id3v2_parse_apic(AVFormatContext *s, ID3v2ExtraMeta *extra_meta)
             st->codecpar->codec_id = AV_CODEC_ID_PNG;
 
         if (apic->description[0])
-            av_dict_set(&st->metadata, "title", (char *)apic->description, 0);
+            av_dict_set(&st->metadata, "title", apic->description, 0);
 
         av_dict_set(&st->metadata, "comment", apic->type, 0);
     }
@@ -1206,7 +1200,7 @@ int ff_id3v2_parse_chapters(AVFormatContext *s, ID3v2ExtraMeta *cur)
 
         chap = &cur->data.chap;
         chapter = avpriv_new_chapter(s, i++, time_base, chap->start,
-                                     chap->end, (char *)chap->element_id);
+                                     chap->end, chap->element_id);
         if (!chapter)
             continue;
 
@@ -1235,7 +1229,7 @@ int ff_id3v2_parse_priv_dict(AVDictionary **metadata, ID3v2ExtraMeta *extra_meta
 
             av_bprint_init(&bprint, priv->datasize + 1, AV_BPRINT_SIZE_UNLIMITED);
 
-            for (i = 0; i < (int)priv->datasize; i++) {
+            for (i = 0; i < priv->datasize; i++) {
                 if (priv->data[i] < 32 || priv->data[i] > 126 || priv->data[i] == '\\') {
                     av_bprintf(&bprint, "\\x%02x", priv->data[i]);
                 } else {

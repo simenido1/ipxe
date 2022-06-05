@@ -31,7 +31,6 @@
 #include "common.h"
 #include "mathematics.h"
 #include "rational.h"
-#include "fdlibm/fdlibm.h"
 
 int av_reduce(int *dst_num, int *dst_den,
               int64_t num, int64_t den, int64_t max)
@@ -57,9 +56,9 @@ int av_reduce(int *dst_num, int *dst_den,
 
         if (a2n > max || a2d > max) {
             if (a1.num) x =          (max - a0.num) / a1.num;
-            if (a1.den) x = (uint64_t)FFMIN((int64_t)x, (max - a0.den) / a1.den);
+            if (a1.den) x = FFMIN(x, (max - a0.den) / a1.den);
 
-            if ((int64_t)(den * (2 * x * a1.den + a0.den)) > num * a1.den)
+            if (den * (2 * x * a1.den + a0.den) > num * a1.den)
                 a1 = (AVRational) { x * a1.num + a0.num, x * a1.den + a0.den };
             break;
         }

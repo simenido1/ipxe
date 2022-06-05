@@ -72,7 +72,7 @@ static av_noinline void FUNC(hl_decode_mb)(const H264Context *h, H264SliceContex
             dest_cr -= sl->uvlinesize * (block_h - 1);
         }
         if (FRAME_MBAFF(h)) {
-            unsigned int list;
+            int list;
             for (list = 0; list < sl->list_count; list++) {
                 if (!USES_LIST(mb_type, list))
                     continue;
@@ -282,7 +282,7 @@ static av_noinline void FUNC(hl_decode_mb_444)(const H264Context *h, H264SliceCo
             for (p = 0; p < 3; p++)
                 dest[p] -= sl->linesize * 15;
         if (FRAME_MBAFF(h)) {
-            unsigned int list;
+            int list;
             for (list = 0; list < sl->list_count; list++) {
                 if (!USES_LIST(mb_type, list))
                     continue;

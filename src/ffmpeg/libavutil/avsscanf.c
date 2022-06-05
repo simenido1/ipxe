@@ -23,7 +23,7 @@
 
 #include <errno.h>
 #include <limits.h>
-//#include <math.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -98,7 +98,7 @@ static int ffshgetc(FFFILE *f)
 {
     int c;
     ptrdiff_t cnt = shcnt(f);
-    if ((f->shlim && cnt >= f->shlim) || (c=ffuflow(f)) < 0) {
+    if (f->shlim && cnt >= f->shlim || (c=ffuflow(f)) < 0) {
         f->shcnt = f->buf - f->rpos + cnt;
         f->shend = 0;
         return EOF;
@@ -175,12 +175,12 @@ static unsigned long long ffintscan(FFFILE *f, unsigned base, int pok, unsigned 
         }
     }
     if (base == 10) {
-        for (x=0; c-'0'<10 && x<=UINT_MAX/10-1; c=shgetc(f))
+        for (x=0; c-'0'<10U && x<=UINT_MAX/10-1; c=shgetc(f))
             x = x*10 + (c-'0');
-        for (y=x; c-'0'<10 && y<=ULLONG_MAX/10 && 10*y<=ULLONG_MAX-(c-'0'); c=shgetc(f))
+        for (y=x; c-'0'<10U && y<=ULLONG_MAX/10 && 10*y<=ULLONG_MAX-(c-'0'); c=shgetc(f))
             y = y*10 + (c-'0');
-        if (c-'0'>=10) goto done;
-    } else if (!(base & (base-1))) {
+        if (c-'0'>=10U) goto done;
+    } else if (!(base & base-1)) {
         int bs = "\0\1\2\4\7\3\6\5"[(0x17*base)>>5&7];
         for (x=0; val[c]<base && x<=UINT_MAX/32; c=shgetc(f))
             x = x<<bs | val[c];
@@ -223,17 +223,17 @@ static long long scanexp(FFFILE *f, int pok)
     if (c=='+' || c=='-') {
         neg = (c=='-');
         c = shgetc(f);
-        if (c-'0'>=10 && pok) shunget(f);
+        if (c-'0'>=10U && pok) shunget(f);
     }
-    if (c-'0'>=10) {
+    if (c-'0'>=10U) {
         shunget(f);
         return LLONG_MIN;
     }
-    for (x=0; c-'0'<10 && x<INT_MAX/10; c = shgetc(f))
+    for (x=0; c-'0'<10U && x<INT_MAX/10; c = shgetc(f))
         x = 10*x + (c-'0');
-    for (y=x; c-'0'<10 && y<LLONG_MAX/100; c = shgetc(f))
+    for (y=x; c-'0'<10U && y<LLONG_MAX/100; c = shgetc(f))
         y = 10*y + (c-'0');
-    for (; c-'0'<10; c = shgetc(f));
+    for (; c-'0'<10U; c = shgetc(f));
     shunget(f);
     return neg ? -y : y;
 }
@@ -273,7 +273,7 @@ static double decfloat(FFFILE *f, int c, int bits, int emin, int sign, int pok)
     }
 
     x[0] = 0;
-    for (; c-'0'<10 || c=='.'; c = shgetc(f)) {
+    for (; c-'0'<10U || c=='.'; c = shgetc(f)) {
         if (c == '.') {
             if (gotrad) break;
             gotrad = 1;
@@ -369,7 +369,7 @@ static double decfloat(FFFILE *f, int c, int bits, int emin, int sign, int pok)
             x[k] = x[k]/p10 + carry;
             carry = 1000000000/p10 * tmp;
             if (k==a && !x[k]) {
-                a = ((a+1) & MASK);
+                a = (a+1 & MASK);
                 rp -= 9;
             }
         }
@@ -381,7 +381,7 @@ static double decfloat(FFFILE *f, int c, int bits, int emin, int sign, int pok)
     while (rp < 9*LD_B1B_DIG || (rp == 9*LD_B1B_DIG && x[a]<th[0])) {
         uint32_t carry = 0;
         e2 -= 29;
-        for (k=((z-1) & MASK); ; k=((k-1) & MASK)) {
+        for (k=(z-1 & MASK); ; k=(k-1 & MASK)) {
             uint64_t tmp = ((uint64_t)x[k] << 29) + carry;
             if (tmp > 1000000000) {
                 carry = tmp / 1000000000;
@@ -390,15 +390,15 @@ static double decfloat(FFFILE *f, int c, int bits, int emin, int sign, int pok)
                 carry = 0;
                 x[k] = tmp;
             }
-            if (k==((z-1) & MASK) && k!=a && !x[k]) z = k;
+            if (k==(z-1 & MASK) && k!=a && !x[k]) z = k;
             if (k==a) break;
         }
         if (carry) {
             rp += 9;
-            a = ((a-1) & MASK);
+            a = (a-1 & MASK);
             if (a == z) {
-                z = ((z-1) & MASK);
-                x[(z-1) & MASK] |= x[z];
+                z = (z-1 & MASK);
+                x[z-1 & MASK] |= x[z];
             }
             x[a] = carry;
         }
@@ -409,39 +409,39 @@ static double decfloat(FFFILE *f, int c, int bits, int emin, int sign, int pok)
         uint32_t carry = 0;
         int sh = 1;
         for (i=0; i<LD_B1B_DIG; i++) {
-            k = ((a+i) & MASK);
+            k = (a+i & MASK);
             if (k == z || x[k] < th[i]) {
                 i=LD_B1B_DIG;
                 break;
             }
-            if (x[(a+i) & MASK] > th[i]) break;
+            if (x[a+i & MASK] > th[i]) break;
         }
         if (i==LD_B1B_DIG && rp==9*LD_B1B_DIG) break;
         /* FIXME: find a way to compute optimal sh */
         if (rp > 9+9*LD_B1B_DIG) sh = 9;
         e2 += sh;
-        for (k=a; k!=z; k=((k+1) & MASK)) {
-            uint32_t tmp = x[k] & ((1<<sh)-1);
+        for (k=a; k!=z; k=(k+1 & MASK)) {
+            uint32_t tmp = x[k] & (1<<sh)-1;
             x[k] = (x[k]>>sh) + carry;
             carry = (1000000000>>sh) * tmp;
             if (k==a && !x[k]) {
-                a = ((a+1) & MASK);
+                a = (a+1 & MASK);
                 i--;
                 rp -= 9;
             }
         }
         if (carry) {
-            if (((z+1) & MASK) != a) {
+            if ((z+1 & MASK) != a) {
                 x[z] = carry;
-                z = ((z+1) & MASK);
-            } else x[(z-1) & MASK] |= 1;
+                z = (z+1 & MASK);
+            } else x[z-1 & MASK] |= 1;
         }
     }
 
     /* Assemble desired bits into floating point variable */
     for (y=i=0; i<LD_B1B_DIG; i++) {
-        if (((a+i) & MASK)==z) x[(z=((z+1) & MASK))-1] = 0;
-        y = 1000000000.0L * y + x[(a+i) & MASK];
+        if ((a+i & MASK)==z) x[(z=(z+1 & MASK))-1] = 0;
+        y = 1000000000.0L * y + x[a+i & MASK];
     }
 
     y *= sign;
@@ -462,14 +462,14 @@ static double decfloat(FFFILE *f, int c, int bits, int emin, int sign, int pok)
     }
 
     /* Process tail of decimal input so it can affect rounding */
-    if (((a+i) & MASK) != z) {
-        uint32_t t = x[(a+i) & MASK];
-        if (t < 500000000 && (t || ((a+i+1) & MASK) != z))
+    if ((a+i & MASK) != z) {
+        uint32_t t = x[a+i & MASK];
+        if (t < 500000000 && (t || (a+i+1 & MASK) != z))
             frac += 0.25*sign;
         else if (t > 500000000)
             frac += 0.75*sign;
         else if (t == 500000000) {
-            if (((a+i+1) & MASK) == z)
+            if ((a+i+1 & MASK) == z)
                 frac += 0.5*sign;
             else
                 frac += 0.75*sign;
@@ -481,7 +481,7 @@ static double decfloat(FFFILE *f, int c, int bits, int emin, int sign, int pok)
     y += frac;
     y -= bias;
 
-    if (((e2+DBL_MANT_DIG) & INT_MAX) > emax-5) {
+    if ((e2+DBL_MANT_DIG & INT_MAX) > emax-5) {
         if (fabs(y) >= pow(2, DBL_MANT_DIG)) {
             if (denormal && bits==DBL_MANT_DIG+e2-emin)
                 denormal = 0;
@@ -521,7 +521,7 @@ static double hexfloat(FFFILE *f, int bits, int emin, int sign, int pok)
         for (rp=0; c=='0'; c = shgetc(f), rp--) gotdig = 1;
     }
 
-    for (; c-'0'<10 || (c|32)-'a'<6 || c=='.'; c = shgetc(f)) {
+    for (; c-'0'<10U || (c|32)-'a'<6U || c=='.'; c = shgetc(f)) {
         if (c=='.') {
             if (gotrad) break;
             rp = dc;
@@ -658,7 +658,7 @@ static double fffloatscan(FFFILE *f, int prec, int pok)
         }
         for (i=1; ; i++) {
             c = shgetc(f);
-            if (c-'0'<10 || c-'A'<26 || c-'a'<26 || c=='_')
+            if (c-'0'<10U || c-'A'<26U || c-'a'<26U || c=='_')
                 continue;
             if (c==')') return NAN;
             shunget(f);

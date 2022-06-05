@@ -621,7 +621,7 @@ static inline int check_marker(void *logctx, GetBitContext *s, const char *msg)
 }
 
 static inline int init_get_bits_xe(GetBitContext *s, const uint8_t *buffer,
-                                   int bit_size)
+                                   int bit_size, int is_le)
 {
     int buffer_size;
     int ret = 0;
@@ -639,6 +639,13 @@ static inline int init_get_bits_xe(GetBitContext *s, const uint8_t *buffer,
     s->size_in_bits_plus8 = bit_size + 8;
     s->buffer_end         = buffer + buffer_size;
     s->index              = 0;
+
+#if CACHED_BITSTREAM_READER
+    s->cache              = 0;
+    s->bits_left          = 0;
+    refill_64(s, is_le);
+#endif
+
     return ret;
 }
 
@@ -654,9 +661,9 @@ static inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
                                 int bit_size)
 {
 #ifdef BITSTREAM_READER_LE
-    return init_get_bits_xe(s, buffer, bit_size);
+    return init_get_bits_xe(s, buffer, bit_size, 1);
 #else
-    return init_get_bits_xe(s, buffer, bit_size);
+    return init_get_bits_xe(s, buffer, bit_size, 0);
 #endif
 }
 
@@ -681,7 +688,7 @@ static inline int init_get_bits8_le(GetBitContext *s, const uint8_t *buffer,
 {
     if (byte_size > INT_MAX / 8 || byte_size < 0)
         byte_size = -1;
-    return init_get_bits_xe(s, buffer, byte_size * 8);
+    return init_get_bits_xe(s, buffer, byte_size * 8, 1);
 }
 
 static inline const uint8_t *align_get_bits(GetBitContext *s)
@@ -704,6 +711,7 @@ static inline const uint8_t *align_get_bits(GetBitContext *s)
                                                                 \
         index = SHOW_UBITS(name, gb, bits);                     \
         code  = table[index][0];                                \
+        /*printf("get_bits 714, code=%d\n", code);   */             \
         n     = table[index][1];                                \
                                                                 \
         if (max_depth > 1 && n < 0) {                           \
@@ -714,6 +722,7 @@ static inline const uint8_t *align_get_bits(GetBitContext *s)
                                                                 \
             index = SHOW_UBITS(name, gb, nb_bits) + code;       \
             code  = table[index][0];                            \
+            /*printf("get_bits 725, code=%d\n", code);  */          \
             n     = table[index][1];                            \
             if (max_depth > 2 && n < 0) {                       \
                 LAST_SKIP_BITS(name, gb, nb_bits);              \
@@ -723,6 +732,7 @@ static inline const uint8_t *align_get_bits(GetBitContext *s)
                                                                 \
                 index = SHOW_UBITS(name, gb, nb_bits) + code;   \
                 code  = table[index][0];                        \
+                /*printf("get_bits 735, code=%d\n", code);    */    \
                 n     = table[index][1];                        \
             }                                                   \
         }                                                       \
@@ -810,7 +820,7 @@ static av_always_inline int get_vlc2(GetBitContext *s, VLC_TYPE (*table)[2],
     return code;
 #else
     int code;
-
+    //printf("bits=%d, max_depth=%d\n", bits, max_depth);
     OPEN_READER(re, s);
     UPDATE_CACHE(re, s);
 

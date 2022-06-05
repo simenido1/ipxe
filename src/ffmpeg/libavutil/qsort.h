@@ -33,11 +33,6 @@
 #define AV_QSORT(p, num, type, cmp) do {\
     void *stack[64][2];\
     int sp= 1;\
-    type *start = NULL;\
-    type *end = NULL;\
-    type *right = NULL;\
-    type *mid = NULL;\
-    type *left = NULL;\
     stack[0][0] = p;\
     stack[0][1] = (p)+(num)-1;\
     while(sp){\

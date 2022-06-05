@@ -27,8 +27,7 @@
 #include "mem.h"
 #include "samplefmt.h"
 #include "hwcontext.h"
-#include "internal.h"
-#include <string.h>
+#include "libavutil/internal.h"
 #include "intmath.h"
 
 #if FF_API_OLD_CHANNEL_LAYOUT
@@ -161,7 +160,7 @@ static int get_video_buffer(AVFrame *frame, int align)
 
     total_size = 4*plane_padding;
     for (i = 0; i < 4; i++) {
-        if ((int)sizes[i] > INT_MAX - total_size)
+        if (sizes[i] > INT_MAX - total_size)
             return AVERROR(EINVAL);
         total_size += sizes[i];
     }
@@ -400,7 +399,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
     }
 
     /* ref the buffers */
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(src->buf); i++) {
+    for (i = 0; i < FF_ARRAY_ELEMS(src->buf); i++) {
         if (!src->buf[i])
             continue;
         dst->buf[i] = av_buffer_ref(src->buf[i]);
@@ -486,7 +485,7 @@ void av_frame_unref(AVFrame *frame)
 
     wipe_side_data(frame);
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(frame->buf); i++)
+    for (i = 0; i < FF_ARRAY_ELEMS(frame->buf); i++)
         av_buffer_unref(&frame->buf[i]);
     for (i = 0; i < frame->nb_extended_buf; i++)
         av_buffer_unref(&frame->extended_buf[i]);
@@ -531,7 +530,7 @@ int av_frame_is_writable(AVFrame *frame)
     if (!frame->buf[0])
         return 0;
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(frame->buf); i++)
+    for (i = 0; i < FF_ARRAY_ELEMS(frame->buf); i++)
         if (frame->buf[i])
             ret &= !!av_buffer_is_writable(frame->buf[i]);
     for (i = 0; i < frame->nb_extended_buf; i++)
@@ -627,7 +626,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
         return NULL;
     data = frame->extended_data[plane];
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(frame->buf) && frame->buf[i]; i++) {
+    for (i = 0; i < FF_ARRAY_ELEMS(frame->buf) && frame->buf[i]; i++) {
         AVBufferRef *buf = frame->buf[i];
         if (data >= buf->data && data < buf->data + buf->size)
             return buf;
@@ -649,7 +648,7 @@ AVFrameSideData *av_frame_new_side_data_from_buf(AVFrame *frame,
     if (!buf)
         return NULL;
 
-    if (frame->nb_side_data > INT_MAX / (int)sizeof(*frame->side_data) - 1)
+    if (frame->nb_side_data > INT_MAX / sizeof(*frame->side_data) - 1)
         return NULL;
 
     tmp = av_realloc(frame->side_data,
@@ -865,8 +864,8 @@ int av_frame_apply_cropping(AVFrame *frame, int flags)
 
     if (frame->crop_left >= INT_MAX - frame->crop_right        ||
         frame->crop_top  >= INT_MAX - frame->crop_bottom       ||
-        (int)(frame->crop_left + frame->crop_right) >= frame->width ||
-        (int)(frame->crop_top + frame->crop_bottom) >= frame->height)
+        (frame->crop_left + frame->crop_right) >= frame->width ||
+        (frame->crop_top + frame->crop_bottom) >= frame->height)
         return AVERROR(ERANGE);
 
     desc = av_pix_fmt_desc_get(frame->format);

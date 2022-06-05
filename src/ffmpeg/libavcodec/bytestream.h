@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <string.h>
 
-//#include "libavutil/avassert.h"
+#include "libavutil/avassert.h"
 #include "libavutil/common.h"
 #include "libavutil/intreadwrite.h"
 
@@ -168,7 +168,7 @@ static av_always_inline int bytestream2_get_bytes_left_p(PutByteContext *p)
 static av_always_inline void bytestream2_skip(GetByteContext *g,
                                               unsigned int size)
 {
-    g->buffer += FFMIN((uint8_t)(g->buffer_end - g->buffer), size);
+    g->buffer += FFMIN(g->buffer_end - g->buffer, size);
 }
 
 static av_always_inline void bytestream2_skipu(GetByteContext *g,
@@ -183,8 +183,8 @@ static av_always_inline void bytestream2_skip_p(PutByteContext *p,
     int size2;
     if (p->eof)
         return;
-    size2 = FFMIN(p->buffer_end - p->buffer, (int)size);
-    if (size2 != (int)size)
+    size2 = FFMIN(p->buffer_end - p->buffer, size);
+    if (size2 != size)
         p->eof = 1;
     p->buffer += size2;
 }
@@ -268,7 +268,7 @@ static av_always_inline unsigned int bytestream2_get_buffer(GetByteContext *g,
                                                             uint8_t *dst,
                                                             unsigned int size)
 {
-    int size2 = FFMIN(g->buffer_end - g->buffer, (int)size);
+    int size2 = FFMIN(g->buffer_end - g->buffer, size);
     memcpy(dst, g->buffer, size2);
     g->buffer += size2;
     return size2;
@@ -290,8 +290,8 @@ static av_always_inline unsigned int bytestream2_put_buffer(PutByteContext *p,
     int size2;
     if (p->eof)
         return 0;
-    size2 = FFMIN(p->buffer_end - p->buffer, (int)size);
-    if (size2 != (int)size)
+    size2 = FFMIN(p->buffer_end - p->buffer, size);
+    if (size2 != size)
         p->eof = 1;
     memcpy(p->buffer, src, size2);
     p->buffer += size2;
@@ -314,8 +314,8 @@ static av_always_inline void bytestream2_set_buffer(PutByteContext *p,
     int size2;
     if (p->eof)
         return;
-    size2 = FFMIN(p->buffer_end - p->buffer, (int)size);
-    if (size2 != (int)size)
+    size2 = FFMIN(p->buffer_end - p->buffer, size);
+    if (size2 != size)
         p->eof = 1;
     memset(p->buffer, c, size2);
     p->buffer += size2;
@@ -352,9 +352,9 @@ static av_always_inline unsigned int bytestream2_copy_buffer(PutByteContext *p,
 
     if (p->eof)
         return 0;
-    size  = FFMIN(g->buffer_end - g->buffer, (int)size);
-    size2 = FFMIN(p->buffer_end - p->buffer, (int)size);
-    if (size2 != (int)size)
+    size  = FFMIN(g->buffer_end - g->buffer, size);
+    size2 = FFMIN(p->buffer_end - p->buffer, size);
+    if (size2 != size)
         p->eof = 1;
 
     return bytestream2_copy_bufferu(p, g, size2);

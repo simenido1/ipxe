@@ -323,7 +323,7 @@ static AVCRC av_crc_table[AV_CRC_MAX][CRC_TABLE_SIZE];
 static AVOnce id ## _once_control = AV_ONCE_INIT;                                             \
 static void id ## _init_table_once(void)                                                      \
 {                                                                                             \
-    av_assert0(av_crc_init(av_crc_table[id], le, bits, poly, sizeof(av_crc_table[id])) >= 0); \
+  /*av_assert0(av_crc_init(av_crc_table[id], le, bits, poly, sizeof(av_crc_table[id])) >= 0);*/ \
 }
 
 #define CRC_INIT_TABLE_ONCE(id) ff_thread_once(&id ## _once_control, id ## _init_table_once)
@@ -383,7 +383,9 @@ const AVCRC *av_crc_get_table(AVCRCId crc_id)
     case AV_CRC_32_IEEE:    CRC_INIT_TABLE_ONCE(AV_CRC_32_IEEE); break;
     case AV_CRC_32_IEEE_LE: CRC_INIT_TABLE_ONCE(AV_CRC_32_IEEE_LE); break;
     case AV_CRC_16_ANSI_LE: CRC_INIT_TABLE_ONCE(AV_CRC_16_ANSI_LE); break;
-    default: av_assert0(0);
+    default :
+        //av_assert0(0);
+        break;
     }
 #endif
     return av_crc_table[crc_id];

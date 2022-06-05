@@ -222,7 +222,7 @@ static char *opencl_get_platform_string(cl_platform_id platform_id,
         av_free(str);
         return NULL;
     }
-    av_assert0(strlen(str) + 1 == size);
+  //avassert0(strlen(str) + 1 == size);
     return str;
 }
 
@@ -243,7 +243,7 @@ static char *opencl_get_device_string(cl_device_id device_id,
         av_free(str);
         return NULL;
     }
-    av_assert0(strlen(str) + 1== size);
+  //avassert0(strlen(str) + 1== size);
     return str;
 }
 
@@ -506,7 +506,7 @@ static int opencl_device_create_internal(AVHWDeviceContext *hwdev,
          *device_name_src   = NULL;
     int err, found, p, d;
 
-    av_assert0(selector->enumerate_platforms &&
+  //avassert0(selector->enumerate_platforms &&
                selector->enumerate_devices);
 
     err = selector->enumerate_platforms(hwdev, &nb_platforms, &platforms,
@@ -1965,7 +1965,7 @@ static int opencl_map_frame(AVHWFramesContext *hwfc, AVFrame *dst,
     cl_event events[AV_NUM_DATA_POINTERS];
     int err, p;
 
-    av_assert0(hwfc->sw_format == dst->format);
+  //avassert0(hwfc->sw_format == dst->format);
 
     if (flags & AV_HWFRAME_MAP_OVERWRITE &&
         !(flags & AV_HWFRAME_MAP_READ)) {
@@ -2818,7 +2818,7 @@ fail:
 static int opencl_map_from(AVHWFramesContext *hwfc, AVFrame *dst,
                            const AVFrame *src, int flags)
 {
-    av_assert0(src->format == AV_PIX_FMT_OPENCL);
+  //avassert0(src->format == AV_PIX_FMT_OPENCL);
     if (hwfc->sw_format != dst->format)
         return AVERROR(ENOSYS);
     return opencl_map_frame(hwfc, dst, src, flags);
@@ -2828,7 +2828,7 @@ static int opencl_map_to(AVHWFramesContext *hwfc, AVFrame *dst,
                          const AVFrame *src, int flags)
 {
     av_unused OpenCLDeviceContext *priv = hwfc->device_ctx->internal->priv;
-    av_assert0(dst->format == AV_PIX_FMT_OPENCL);
+  //avassert0(dst->format == AV_PIX_FMT_OPENCL);
     switch (src->format) {
 #if HAVE_OPENCL_DRM_BEIGNET
     case AV_PIX_FMT_DRM_PRIME:

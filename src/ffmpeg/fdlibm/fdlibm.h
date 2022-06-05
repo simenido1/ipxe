@@ -93,6 +93,11 @@ struct exception {
 /*
  * ANSI/POSIX
  */
+extern double round __P((double)); //from libavutil/libm.h
+extern double trunc __P((double));
+extern float roundf __P((float));
+extern float truncf __P((float));
+
 extern double acos __P((double));
 extern double asin __P((double));
 extern double atan __P((double));

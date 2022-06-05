@@ -146,18 +146,18 @@ void av_bprint_chars(AVBPrint *buf, char c, unsigned n);
 void av_bprint_append_data(AVBPrint *buf, const char *data, unsigned size);
 
 struct tm;
-// /**
-//  * Append a formatted date and time to a print buffer.
-//  *
-//  * param buf  bprint buffer to use
-//  * param fmt  date and time format string, see strftime()
-//  * param tm   broken-down time structure to translate
-//  *
-//  * @note due to poor design of the standard strftime function, it may
-//  * produce poor results if the format string expands to a very long text and
-//  * the bprint buffer is near the limit stated by the size_max option.
-//  */
-// void av_bprint_strftime(AVBPrint *buf, const char *fmt, const struct tm *tm);
+/**
+ * Append a formatted date and time to a print buffer.
+ *
+ * param buf  bprint buffer to use
+ * param fmt  date and time format string, see strftime()
+ * param tm   broken-down time structure to translate
+ *
+ * @note due to poor design of the standard strftime function, it may
+ * produce poor results if the format string expands to a very long text and
+ * the bprint buffer is near the limit stated by the size_max option.
+ */
+void av_bprint_strftime(AVBPrint *buf, const char *fmt, const struct tm *tm);
 
 /**
  * Allocate bytes in the buffer for external use.

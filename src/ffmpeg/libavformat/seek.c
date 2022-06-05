@@ -20,7 +20,6 @@
  */
 
 #include <stdint.h>
-#include <string.h>
 
 #include "libavutil/avassert.h"
 #include "libavutil/mathematics.h"
@@ -206,7 +205,7 @@ void ff_configure_buffers_for_index(AVFormatContext *s, int64_t time_tolerance)
                 for (; i2 < sti2->nb_index_entries; i2++) {
                     const AVIndexEntry *const e2 = &sti2->index_entries[i2];
                     int64_t e2_pts = av_rescale_q(e2->timestamp, st2->time_base, AV_TIME_BASE_Q);
-                    if (e2_pts < e1_pts || (int64_t)(e2_pts - (uint64_t)e1_pts - time_tolerance) <0)
+                    if (e2_pts < e1_pts || e2_pts - (uint64_t)e1_pts < time_tolerance)
                         continue;
                     pos_delta = FFMAX(pos_delta, e1->pos - e2->pos);
                     break;
@@ -498,8 +497,6 @@ int64_t ff_gen_search(AVFormatContext *s, int stream_index, int64_t target_ts,
 static int seek_frame_byte(AVFormatContext *s, int stream_index,
                            int64_t pos, int flags)
 {
-    (void)stream_index;
-    (void)flags;
     FFFormatContext *const si = ffformatcontext(s);
     int64_t pos_min, pos_max;
 

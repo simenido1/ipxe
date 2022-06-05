@@ -2670,7 +2670,7 @@ const AVPixFmtDescriptor *av_pix_fmt_desc_next(const AVPixFmtDescriptor *prev)
 {
     if (!prev)
         return &av_pix_fmt_descriptors[0];
-    while (prev - av_pix_fmt_descriptors < (int)FF_ARRAY_ELEMS(av_pix_fmt_descriptors) - 1) {
+    while (prev - av_pix_fmt_descriptors < FF_ARRAY_ELEMS(av_pix_fmt_descriptors) - 1) {
         prev++;
         if (prev->name)
             return prev;
@@ -2709,7 +2709,7 @@ int av_pix_fmt_count_planes(enum AVPixelFormat pix_fmt)
 
     for (i = 0; i < desc->nb_components; i++)
         planes[desc->comp[i].plane] = 1;
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(planes); i++)
+    for (i = 0; i < FF_ARRAY_ELEMS(planes); i++)
         ret += planes[i];
     return ret;
 }
@@ -2717,7 +2717,7 @@ int av_pix_fmt_count_planes(enum AVPixelFormat pix_fmt)
 void ff_check_pixfmt_descriptors(void){
     int i, j;
 
-    for (i=0; i<(int)FF_ARRAY_ELEMS(av_pix_fmt_descriptors); i++) {
+    for (i=0; i<FF_ARRAY_ELEMS(av_pix_fmt_descriptors); i++) {
         const AVPixFmtDescriptor *d = &av_pix_fmt_descriptors[i];
         uint8_t fill[4][8+6+3] = {{0}};
         uint8_t *data[4] = {fill[0], fill[1], fill[2], fill[3]};
@@ -2733,7 +2733,7 @@ void ff_check_pixfmt_descriptors(void){
         //av_assert0(d->name && d->name[0]);
         av_assert2(av_get_pix_fmt(d->name) == i);
 
-        for (j=0; j<(int)FF_ARRAY_ELEMS(d->comp); j++) {
+        for (j=0; j<FF_ARRAY_ELEMS(d->comp); j++) {
             const AVComponentDescriptor *c = &d->comp[j];
             if(j>=d->nb_components) {
                 //av_assert0(!c->plane && !c->step && !c->offset && !c->shift && !c->depth);
@@ -2944,7 +2944,7 @@ int av_get_pix_fmt_loss(enum AVPixelFormat dst_pix_fmt,
                             int has_alpha)
 {
     int loss;
-    int ret = get_pix_fmt_score(dst_pix_fmt, src_pix_fmt, (unsigned int *)&loss, has_alpha ? ~0 : ~FF_LOSS_ALPHA);
+    int ret = get_pix_fmt_score(dst_pix_fmt, src_pix_fmt, &loss, has_alpha ? ~0 : ~FF_LOSS_ALPHA);
     if (ret < 0)
         return ret;
     return loss;
@@ -2968,8 +2968,8 @@ enum AVPixelFormat av_find_best_pix_fmt_of_2(enum AVPixelFormat dst_pix_fmt1, en
         if(!has_alpha)
             loss_mask &= ~FF_LOSS_ALPHA;
 
-        score1 = get_pix_fmt_score(dst_pix_fmt1, src_pix_fmt, (unsigned int *)&loss1, loss_mask);
-        score2 = get_pix_fmt_score(dst_pix_fmt2, src_pix_fmt, (unsigned int *)&loss2, loss_mask);
+        score1 = get_pix_fmt_score(dst_pix_fmt1, src_pix_fmt, &loss1, loss_mask);
+        score2 = get_pix_fmt_score(dst_pix_fmt2, src_pix_fmt, &loss2, loss_mask);
 
         if (score1 == score2) {
             if(av_get_padded_bits_per_pixel(desc2) != av_get_padded_bits_per_pixel(desc1)) {
@@ -2997,7 +2997,7 @@ int av_color_range_from_name(const char *name)
 {
     int i;
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(color_range_names); i++) {
+    for (i = 0; i < FF_ARRAY_ELEMS(color_range_names); i++) {
         if (av_strstart(name, color_range_names[i], NULL))
             return i;
     }
@@ -3015,7 +3015,7 @@ int av_color_primaries_from_name(const char *name)
 {
     int i;
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(color_primaries_names); i++) {
+    for (i = 0; i < FF_ARRAY_ELEMS(color_primaries_names); i++) {
         if (!color_primaries_names[i])
             continue;
 
@@ -3036,7 +3036,7 @@ int av_color_transfer_from_name(const char *name)
 {
     int i;
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(color_transfer_names); i++) {
+    for (i = 0; i < FF_ARRAY_ELEMS(color_transfer_names); i++) {
         if (!color_transfer_names[i])
             continue;
 
@@ -3057,7 +3057,7 @@ int av_color_space_from_name(const char *name)
 {
     int i;
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(color_space_names); i++) {
+    for (i = 0; i < FF_ARRAY_ELEMS(color_space_names); i++) {
         if (!color_space_names[i])
             continue;
 
@@ -3078,7 +3078,7 @@ int av_chroma_location_from_name(const char *name)
 {
     int i;
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(chroma_location_names); i++) {
+    for (i = 0; i < FF_ARRAY_ELEMS(chroma_location_names); i++) {
         if (!chroma_location_names[i])
             continue;
 

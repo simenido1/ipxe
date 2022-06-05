@@ -18,7 +18,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
+
 #include "atsc_a53.h"
 #include "get_bits.h"
 

@@ -429,6 +429,7 @@ static int decode_slice(MpegEncContext *s)
 int ff_h263_decode_frame(AVCodecContext *avctx, AVFrame *pict,
                          int *got_frame, AVPacket *avpkt)
 {
+    //printf("h263dec 432\n");
     const uint8_t *buf = avpkt->data;
     int buf_size       = avpkt->size;
     MpegEncContext *s  = avctx->priv_data;
@@ -439,8 +440,10 @@ int ff_h263_decode_frame(AVCodecContext *avctx, AVFrame *pict,
     if (buf_size == 0) {
         /* special case for last picture */
         if (s->low_delay == 0 && s->next_picture_ptr) {
-            if ((ret = av_frame_ref(pict, s->next_picture_ptr->f)) < 0)
+            if ((ret = av_frame_ref(pict, s->next_picture_ptr->f)) < 0) {
+                //printf("h263dec 444, ret=%d\n", ret);
                 return ret;
+            }
             s->next_picture_ptr = NULL;
 
             *got_frame = 1;
@@ -466,8 +469,10 @@ int ff_h263_decode_frame(AVCodecContext *avctx, AVFrame *pict,
         }
 
         if (ff_combine_frame(&s->parse_context, next, (const uint8_t **)&buf,
-                             &buf_size) < 0)
+                             &buf_size) < 0) {
+            //printf("h263dec 473\n");
             return buf_size;
+                             }
     }
 #endif
 
@@ -489,11 +494,13 @@ retry:
         ret = init_get_bits8(&s->gb, s->bitstream_buffer,
                              s->bitstream_buffer_size);
     else
-        ret = init_get_bits8(&s->gb, buf, buf_size);
+        ret = init_get_bits8(&s->gb, buf, buf_size); //go this branch
 
     s->bitstream_buffer_size = 0;
-    if (ret < 0)
+    if (ret < 0) {
+        //printf("h263dec 501, ret=%d\n", ret);
         return ret;
+    }
 
     if (!s->context_initialized)
         // we need the idct permutation for reading a custom matrix
@@ -512,6 +519,7 @@ retry:
                 ff_mpeg4_decode_picture_header(avctx->priv_data, &gb, 1, 0);
         }
         ret = ff_mpeg4_decode_picture_header(avctx->priv_data, &s->gb, 0, 0);
+        //printf("h263dec 522, ret=%d\n", ret);
     } else if (CONFIG_H263I_DECODER && s->codec_id == AV_CODEC_ID_H263I) {
         ret = ff_intel_h263_decode_picture_header(s);
     } else if (CONFIG_FLV_DECODER && s->h263_flv) {
@@ -539,14 +547,18 @@ retry:
 
     if (!s->context_initialized) {
         avctx->pix_fmt = h263_get_format(avctx);
-        if ((ret = ff_mpv_common_init(s)) < 0)
+        if ((ret = ff_mpv_common_init(s)) < 0) {
+            //printf("h263dec 551, ret=%d\n", ret);
             return ret;
+        }
     }
 
     if (!s->current_picture_ptr || s->current_picture_ptr->f->data[0]) {
         int i = ff_find_unused_picture(s->avctx, s->picture, 0);
-        if (i < 0)
+        if (i < 0) {
+            //printf("h263dec 559, i=%d\n", i);
             return i;
+        }
         s->current_picture_ptr = &s->picture[i];
     }
 
@@ -570,9 +582,10 @@ retry:
         s->context_reinit = 0;
 
         ret = ff_set_dimensions(avctx, s->width, s->height);
-        if (ret < 0)
+        if (ret < 0) {
+            //printf("h263dec 586, ret=%d\n", ret);
             return ret;
-
+        }
         ff_set_sar(avctx, avctx->sample_aspect_ratio);
 
         if ((ret = ff_mpv_common_frame_size_change(s)))
@@ -614,7 +627,10 @@ retry:
     }
 
     if ((ret = ff_mpv_frame_start(s, avctx)) < 0)
+    {
+        //printf("h263dec 631, ret=%d\n", ret);
         return ret;
+    }
 
     if (!s->divx_packed && !avctx->hwaccel)
         ff_thread_finish_setup(avctx);
@@ -622,8 +638,10 @@ retry:
     if (avctx->hwaccel) {
         ret = avctx->hwaccel->start_frame(avctx, s->gb.buffer,
                                           s->gb.buffer_end - s->gb.buffer);
-        if (ret < 0 )
+        if (ret < 0 ) {
+            //printf("h263dec 642, ret=%d\n", ret);
             return ret;
+        }
     }
 
     ff_mpeg_er_frame_start(s);
@@ -677,8 +695,10 @@ frame_end:
 
     if (avctx->hwaccel) {
         ret = avctx->hwaccel->end_frame(avctx);
-        if (ret < 0)
+        if (ret < 0) {
+            //printf("h263dec 699, ret=%d\n", ret);
             return ret;
+        }
     }
 
     ff_mpv_frame_end(s);
@@ -692,20 +712,24 @@ frame_end:
     av_assert1(s->current_picture.f->pict_type == s->current_picture_ptr->f->pict_type);
     av_assert1(s->current_picture.f->pict_type == s->pict_type);
     if (s->pict_type == AV_PICTURE_TYPE_B || s->low_delay) {
-        if ((ret = av_frame_ref(pict, s->current_picture_ptr->f)) < 0)
+        if ((ret = av_frame_ref(pict, s->current_picture_ptr->f)) < 0) {
+            //printf("h263dec 716, ret=%d\n", ret);
             return ret;
+        }
         ff_print_debug_info(s, s->current_picture_ptr, pict);
         ff_mpv_export_qp_table(s, pict, s->current_picture_ptr, FF_MPV_QSCALE_TYPE_MPEG1);
     } else if (s->last_picture_ptr) {
-        if ((ret = av_frame_ref(pict, s->last_picture_ptr->f)) < 0)
+        if ((ret = av_frame_ref(pict, s->last_picture_ptr->f)) < 0) {
+            //printf("h263dec 723, ret=%d\n", ret);
             return ret;
+        }
         ff_print_debug_info(s, s->last_picture_ptr, pict);
         ff_mpv_export_qp_table(s, pict, s->last_picture_ptr, FF_MPV_QSCALE_TYPE_MPEG1);
     }
 
     if (s->last_picture_ptr || s->low_delay) {
         if (   pict->format == AV_PIX_FMT_YUV420P
-            && ((uint32_t)s->codec_tag == AV_RL32("GEOV") || (uint32_t)s->codec_tag == AV_RL32("GEOX"))) {
+            && (s->codec_tag == AV_RL32("GEOV") || s->codec_tag == AV_RL32("GEOX"))) {
             for (int p = 0; p < 3; p++) {
                 int h = AV_CEIL_RSHIFT(pict->height, !!p);
 
@@ -716,10 +740,16 @@ frame_end:
         *got_frame = 1;
     }
 
-    if (slice_ret < 0 && (avctx->err_recognition & AV_EF_EXPLODE))
+    if (slice_ret < 0 && (avctx->err_recognition & AV_EF_EXPLODE)) {
+        //printf("h263dec 744, slice_ret=%d\n", slice_ret);
         return slice_ret;
-    else
-        return get_consumed_bytes(s, buf_size);
+    }
+    else {
+        ret = get_consumed_bytes(s, buf_size);
+        //printf("h263dec 749, ret=%d\n", ret);
+        return ret;
+        // return get_consumed_bytes(s, buf_size);
+    }
 }
 
 const enum AVPixelFormat ff_h263_hwaccel_pixfmt_list_420[] = {

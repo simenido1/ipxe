@@ -31,7 +31,7 @@
 #include "simple_idct.h"
 
 #include "bit_depth_template.c"
-
+#include "libavutil/internal.h"
 #undef W1
 #undef W2
 #undef W3

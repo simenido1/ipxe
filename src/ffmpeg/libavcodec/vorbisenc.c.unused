@@ -211,7 +211,7 @@ static int ready_codebook(vorbis_enc_codebook *cb)
 static int ready_residue(vorbis_enc_residue *rc, vorbis_enc_context *venc)
 {
     int i;
-    av_assert0(rc->type == 2);
+  //avassert0(rc->type == 2);
     rc->maxes = av_calloc(rc->classifications, sizeof(*rc->maxes));
     if (!rc->maxes)
         return AVERROR(ENOMEM);
@@ -918,8 +918,8 @@ static int residue_encode(vorbis_enc_context *venc, vorbis_enc_residue *rc,
     int classes[MAX_CHANNELS][NUM_RESIDUE_PARTITIONS];
     int classwords = venc->codebooks[rc->classbook].ndimensions;
 
-    av_assert0(rc->type == 2);
-    av_assert0(real_ch == 2);
+  //avassert0(rc->type == 2);
+  //avassert0(real_ch == 2);
     for (p = 0; p < partitions; p++) {
         float max1 = 0.0, max2 = 0.0;
         int s = rc->begin + p * psize;

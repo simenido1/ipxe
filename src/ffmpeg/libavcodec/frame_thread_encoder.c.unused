@@ -189,7 +189,7 @@ av_cold int ff_frame_thread_encoder_init(AVCodecContext *avctx)
     if(avctx->thread_count > MAX_THREADS)
         return AVERROR(EINVAL);
 
-    av_assert0(!avctx->internal->frame_thread_encoder);
+  //avassert0(!avctx->internal->frame_thread_encoder);
     c = avctx->internal->frame_thread_encoder = av_mallocz(sizeof(ThreadContext));
     if(!c)
         return AVERROR(ENOMEM);
@@ -235,7 +235,7 @@ av_cold int ff_frame_thread_encoder_init(AVCodecContext *avctx)
 
         if ((ret = avcodec_open2(thread_avctx, avctx->codec, NULL)) < 0)
             goto fail;
-        av_assert0(!thread_avctx->internal->frame_thread_encoder);
+      //avassert0(!thread_avctx->internal->frame_thread_encoder);
         thread_avctx->internal->frame_thread_encoder = c;
         if ((ret = pthread_create(&c->worker[i], NULL, worker, thread_avctx))) {
             ret = AVERROR(ret);

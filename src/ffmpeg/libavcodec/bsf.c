@@ -335,7 +335,7 @@ static int bsf_list_filter(AVBSFContext *bsf, AVPacket *out)
             return ret;
 
         /* send it to the next filter down the chain */
-        if ((int)lst->idx < lst->nb_bsfs) {
+        if (lst->idx < lst->nb_bsfs) {
             ret = av_bsf_send_packet(lst->bsfs[lst->idx], eof ? NULL : out);
             av_assert1(ret != AVERROR(EAGAIN));
             if (ret < 0) {

@@ -31,13 +31,13 @@
 #endif
 
 #include <errno.h>
-#include <stdint.h>
 #include <inttypes.h>
 #include <limits.h>
-//#include <math.h>
+#include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-// #include <string.h>
+#include <string.h>
 
 #include "attributes.h"
 #include "macros.h"
@@ -248,7 +248,7 @@ static av_always_inline av_const int16_t av_clip_int16_c(int a)
  */
 static av_always_inline av_const int32_t av_clipl_int32_c(int64_t a)
 {
-    if ((a+0x80000000u) & ~0xFFFFFFFFULL) return (int32_t)((a>>63) ^ 0x7FFFFFFF);
+    if ((a+0x80000000u) & ~UINT64_C(0xFFFFFFFF)) return (int32_t)((a>>63) ^ 0x7FFFFFFF);
     else                                         return (int32_t)a;
 }
 

@@ -28,7 +28,7 @@
 #define AVUTIL_MATHEMATICS_H
 
 #include <stdint.h>
-//#include <math.h>
+#include <math.h>
 #include "attributes.h"
 #include "rational.h"
 #include "intfloat.h"

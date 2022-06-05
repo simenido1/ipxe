@@ -101,7 +101,7 @@ int avpriv_slicethread_create(AVSliceThread **pctx, void *priv,
     AVSliceThread *ctx;
     int nb_workers, i;
 
-    av_assert0(nb_threads >= 0);
+  //avassert0(nb_threads >= 0);
     if (!nb_threads) {
         int nb_cpus = av_cpu_count();
         if (nb_cpus > 1)
@@ -167,7 +167,7 @@ void avpriv_slicethread_execute(AVSliceThread *ctx, int nb_jobs, int execute_mai
 {
     int nb_workers, i, is_last = 0;
 
-    av_assert0(nb_jobs > 0);
+  //avassert0(nb_jobs > 0);
     ctx->nb_jobs           = nb_jobs;
     ctx->nb_active_threads = FFMIN(nb_jobs, ctx->nb_threads);
     atomic_store_explicit(&ctx->first_job, 0, memory_order_relaxed);
@@ -246,12 +246,12 @@ int avpriv_slicethread_create(AVSliceThread **pctx, void *priv,
 
 void avpriv_slicethread_execute(AVSliceThread *ctx, int nb_jobs, int execute_main)
 {
-    av_assert0(0);
+  //avassert0(0);
 }
 
 void avpriv_slicethread_free(AVSliceThread **pctx)
 {
-    av_assert0(!pctx || !*pctx);
+  //avassert0(!pctx || !*pctx);
 }
 
 #endif /* HAVE_PTHREADS || HAVE_W32THREADS || HAVE_OS32THREADS */

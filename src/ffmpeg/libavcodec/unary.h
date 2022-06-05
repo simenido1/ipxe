@@ -47,7 +47,7 @@ static inline int get_unary(GetBitContext *gb, int stop, int len)
 {
     int i;
 
-    for(i = 0; i < len && (int)get_bits1(gb) != stop; i++);
+    for(i = 0; i < len && get_bits1(gb) != stop; i++);
     return i;
 }
 

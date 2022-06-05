@@ -17,7 +17,6 @@
  */
 
 #include "film_grain_params.h"
-#include <string.h>
 
 AVFilmGrainParams *av_film_grain_params_alloc(size_t *size)
 {

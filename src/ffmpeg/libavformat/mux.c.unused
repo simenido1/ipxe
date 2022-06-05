@@ -765,7 +765,7 @@ static int write_packet(AVFormatContext *s, AVPacket *pkt)
 
     if ((pkt->flags & AV_PKT_FLAG_UNCODED_FRAME)) {
         AVFrame **frame = (AVFrame **)pkt->data;
-        av_assert0(pkt->size == sizeof(*frame));
+      //avassert0(pkt->size == sizeof(*frame));
         ret = s->oformat->write_uncoded_frame(s, pkt->stream_index, frame, 0);
     } else {
         ret = s->oformat->write_packet(s, pkt);
@@ -1392,7 +1392,7 @@ static int write_uncoded_frame_internal(AVFormatContext *s, int stream_index,
     FFFormatContext *const si = ffformatcontext(s);
     AVPacket *pkt = si->parse_pkt;
 
-    av_assert0(s->oformat);
+  //avassert0(s->oformat);
     if (!s->oformat->write_uncoded_frame) {
         av_frame_free(&frame);
         return AVERROR(ENOSYS);
@@ -1443,7 +1443,7 @@ int av_interleaved_write_uncoded_frame(AVFormatContext *s, int stream_index,
 
 int av_write_uncoded_frame_query(AVFormatContext *s, int stream_index)
 {
-    av_assert0(s->oformat);
+  //avassert0(s->oformat);
     if (!s->oformat->write_uncoded_frame)
         return AVERROR(ENOSYS);
     return s->oformat->write_uncoded_frame(s, stream_index, NULL,

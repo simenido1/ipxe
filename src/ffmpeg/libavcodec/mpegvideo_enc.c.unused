@@ -1226,7 +1226,7 @@ static int estimate_best_b_count(MpegEncContext *s)
     int best_b_count = -1;
     int ret = 0;
 
-    av_assert0(scale >= 0 && scale <= 3);
+  //avassert0(scale >= 0 && scale <= 3);
 
     pkt = av_packet_alloc();
     if (!pkt)
@@ -1714,7 +1714,7 @@ int ff_mpv_encode_picture(AVCodecContext *avctx, AVPacket *pkt,
 vbv_retry:
         ret = encode_picture(s, s->picture_number);
         if (growing_buffer) {
-            av_assert0(s->pb.buf == avctx->internal->byte_buffer);
+          //avassert0(s->pb.buf == avctx->internal->byte_buffer);
             pkt->data = s->pb.buf;
             pkt->size = avctx->internal->byte_buffer_size;
         }
@@ -1765,7 +1765,7 @@ vbv_retry:
                 goto vbv_retry;
             }
 
-            av_assert0(avctx->rc_max_rate);
+          //avassert0(avctx->rc_max_rate);
         }
 
         if (avctx->flags & AV_CODEC_FLAG_PASS1)
@@ -1847,7 +1847,7 @@ vbv_retry:
 
             vbv_delay = FFMAX(vbv_delay, min_delay);
 
-            av_assert0(vbv_delay < 0xFFFF);
+          //avassert0(vbv_delay < 0xFFFF);
 
             vbv_delay_ptr[0] &= 0xF8;
             vbv_delay_ptr[0] |= vbv_delay >> 13;
@@ -2503,7 +2503,7 @@ static inline void encode_mb_hq(MpegEncContext *s, MpegEncContext *backup, MpegE
         s->dest[0] = s->sc.rd_scratchpad;
         s->dest[1] = s->sc.rd_scratchpad + 16*s->linesize;
         s->dest[2] = s->sc.rd_scratchpad + 16*s->linesize + 8;
-        av_assert0(s->linesize >= 32); //FIXME
+      //avassert0(s->linesize >= 32); //FIXME
     }
 
     encode_mb(s, motion_x, motion_y);
@@ -3727,7 +3727,7 @@ static int encode_picture(MpegEncContext *s, int picture_number)
             ff_mpeg1_encode_picture_header(s, picture_number);
         break;
     default:
-        av_assert0(0);
+      //avassert0(0);
     }
     bits= put_bits_count(&s->pb);
     s->header_bits= bits - s->last_bits;

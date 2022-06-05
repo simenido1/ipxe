@@ -110,7 +110,7 @@ int av_strerror(int errnum, char *errbuf, size_t errbuf_size)
 //     int ret = 0, i;
     // const struct error_entry *entry = NULL;
 
-    // for (i = 0; i < (int)FF_ARRAY_ELEMS(error_entries); i++) {
+    // for (i = 0; i < FF_ARRAY_ELEMS(error_entries); i++) {
     //     if (errnum == error_entries[i].num) {
     //         entry = &error_entries[i];
     //         break;

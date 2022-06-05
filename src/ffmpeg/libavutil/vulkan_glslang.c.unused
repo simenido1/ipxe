@@ -174,7 +174,7 @@ static int glslc_shader_compile(FFVkSPIRVCompiler *ctx, void *avctx,
         .resource                          = &glslc_resource_limits,
     };
 
-    av_assert0(glslc_refcount);
+  //avassert0(glslc_refcount);
 
     if (!(glslc_shader = glslang_shader_create(&glslc_input)))
         return AVERROR(ENOMEM);
@@ -239,7 +239,7 @@ static void glslc_shader_free(FFVkSPIRVCompiler *ctx, void **opaque)
     if (!opaque || !*opaque)
         return;
 
-    av_assert0(glslc_refcount);
+  //avassert0(glslc_refcount);
     glslang_program_delete(*opaque);
     *opaque = NULL;
 }

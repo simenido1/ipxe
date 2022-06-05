@@ -6,6 +6,6 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    command: /bin/bash -c "make bin/ipxe.iso"
+    command: /bin/bash -c "make bin/ipxe.iso DEBUG=malloc EMBED=test.ipxe"
     volumes:
       - ./src:/usr/src/ipxe

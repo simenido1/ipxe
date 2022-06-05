@@ -26,7 +26,7 @@
  */
 
 #include "avutil.h"
-//#include "avassert.h"
+#include "avassert.h"
 #include "avstring.h"
 #include "channel_layout.h"
 #include "common.h"
@@ -40,11 +40,9 @@
 #include "samplefmt.h"
 #include "bprint.h"
 #include "version.h"
-#include "internal.h"
 
 #include <float.h>
-#include <string.h>
-
+#include "internal.h"
 const AVOption *av_opt_next(const void *obj, const AVOption *last)
 {
     const AVClass *class;
@@ -75,9 +73,9 @@ static int read_number(const AVOption *o, const void *dst, double *num, int *den
         *intnum = *(int *)dst;
         return 0;
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
     case AV_OPT_TYPE_CHANNEL_LAYOUT:
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
     case AV_OPT_TYPE_DURATION:
     case AV_OPT_TYPE_INT64:
@@ -97,8 +95,6 @@ static int read_number(const AVOption *o, const void *dst, double *num, int *den
     case AV_OPT_TYPE_CONST:
         *num = o->default_val.dbl;
         return 0;
-    default:
-        break;
     }
     return AVERROR(EINVAL);
 }
@@ -136,9 +132,9 @@ static int write_number(void *obj, const AVOption *o, void *dst, double num, int
         break;
     case AV_OPT_TYPE_DURATION:
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
     case AV_OPT_TYPE_CHANNEL_LAYOUT:
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
     case AV_OPT_TYPE_INT64:{
         double d = num / den;
@@ -149,10 +145,10 @@ static int write_number(void *obj, const AVOption *o, void *dst, double num, int
         break;}
     case AV_OPT_TYPE_UINT64:{
         double d = num / den;
-         //We must special case uint64_t here as llrint() does not support values
-         //outside the int64_t range and there is no portable function which does
-         //"INT64_MAX + 1ULL" is used as it is representable exactly as IEEE double
-         //while INT64_MAX is not
+        // We must special case uint64_t here as llrint() does not support values
+        // outside the int64_t range and there is no portable function which does
+        // "INT64_MAX + 1ULL" is used as it is representable exactly as IEEE double
+        // while INT64_MAX is not
         if (intnum == 1 && d == (double)UINT64_MAX) {
             *(uint64_t *)dst = UINT64_MAX;
         } else if (d > INT64_MAX + 1ULL) {
@@ -192,8 +188,6 @@ static int hexchar2int(char c) {
 
 static int set_string_binary(void *obj, const AVOption *o, const char *val, uint8_t **dst)
 {
-    (void)obj;
-    (void)o;
     int *lendst = (int *)(dst + 1);
     uint8_t *bin, *ptr;
     int len;
@@ -228,10 +222,8 @@ static int set_string_binary(void *obj, const AVOption *o, const char *val, uint
 
 static int set_string(void *obj, const AVOption *o, const char *val, uint8_t **dst)
 {
-    (void)obj;
-    (void)o;
     av_freep(dst);
-    *dst = (uint8_t *)av_strdup(val);
+    *dst = av_strdup(val);
     return *dst ? 0 : AVERROR(ENOMEM);
 }
 
@@ -267,7 +259,7 @@ static int set_string_number(void *obj, void *target_obj, const AVOption *o, con
         if (o->type == AV_OPT_TYPE_FLAGS) {
             if (*val == '+' || *val == '-')
                 cmd = *(val++);
-            for (; i < (int)(sizeof(buf) - 1) && val[i] && val[i] != '+' && val[i] != '-'; i++)
+            for (; i < sizeof(buf) - 1 && val[i] && val[i] != '+' && val[i] != '-'; i++)
                 buf[i] = val[i];
             buf[i] = 0;
         }
@@ -286,11 +278,11 @@ static int set_string_number(void *obj, void *target_obj, const AVOption *o, con
                            o_named->name, o_named->help);
             } else {
                 if (o->unit) {
-                    for (o_named = NULL; (o_named = av_opt_next(target_obj, o_named)); ) {
+                    for (o_named = NULL; o_named = av_opt_next(target_obj, o_named); ) {
                         if (o_named->type == AV_OPT_TYPE_CONST &&
                             o_named->unit &&
                             !strcmp(o_named->unit, o->unit)) {
-                            if (ci + 6 >= (int)(FF_ARRAY_ELEMS(const_values))) {
+                            if (ci + 6 >= FF_ARRAY_ELEMS(const_values)) {
                                 av_log(obj, AV_LOG_ERROR, "const_values array too small for %s\n", o->unit);
                                 return AVERROR_PATCHWELCOME;
                             }
@@ -339,7 +331,7 @@ static int set_string_number(void *obj, void *target_obj, const AVOption *o, con
 static int set_string_image_size(void *obj, const AVOption *o, const char *val, int *dst)
 {
     int ret;
-    (void)o;
+
     if (!val || !strcmp(val, "none")) {
         dst[0] =
         dst[1] = 0;
@@ -353,7 +345,6 @@ static int set_string_image_size(void *obj, const AVOption *o, const char *val, 
 
 static int set_string_video_rate(void *obj, const AVOption *o, const char *val, AVRational *dst)
 {
-    (void)o;
     int ret = av_parse_video_rate(dst, val);
     if (ret < 0)
         av_log(obj, AV_LOG_ERROR, "Unable to parse option value \"%s\" as video rate\n", val);
@@ -363,7 +354,7 @@ static int set_string_video_rate(void *obj, const AVOption *o, const char *val, 
 static int set_string_color(void *obj, const AVOption *o, const char *val, uint8_t *dst)
 {
     int ret;
-    (void)o;
+
     if (!val) {
         return 0;
     } else {
@@ -425,7 +416,7 @@ static int set_string_fmt(void *obj, const AVOption *o, const char *val, uint8_t
         if (fmt == -1) {
             char *tail;
             fmt = strtol(val, &tail, 0);
-            if (*tail || fmt >= fmt_nb) {
+            if (*tail || (unsigned)fmt >= fmt_nb) {
                 av_log(obj, AV_LOG_ERROR,
                        "Unable to parse option value \"%s\" as %s\n", val, desc);
                 return AVERROR(EINVAL);
@@ -436,7 +427,7 @@ static int set_string_fmt(void *obj, const AVOption *o, const char *val, uint8_t
     min = FFMAX(o->min, -1);
     max = FFMIN(o->max, fmt_nb-1);
 
-     //hack for compatibility with old ffmpeg
+    // hack for compatibility with old ffmpeg
     if(min == 0 && max == 0) {
         min = -1;
         max = fmt_nb-1;
@@ -468,8 +459,7 @@ static int set_string_sample_fmt(void *obj, const AVOption *o, const char *val, 
 static int set_string_dict(void *obj, const AVOption *o, const char *val, uint8_t **dst)
 {
     AVDictionary *options = NULL;
-    (void)obj;
-    (void)o;
+
     if (val) {
         int ret = av_dict_parse_string(&options, val, "=", ":", 0);
         if (ret < 0) {
@@ -487,8 +477,6 @@ static int set_string_dict(void *obj, const AVOption *o, const char *val, uint8_
 static int set_string_channel_layout(void *obj, const AVOption *o,
                                      const char *val, void *dst)
 {
-    (void)obj;
-    (void)o;
     AVChannelLayout *channel_layout = dst;
     av_channel_layout_uninit(channel_layout);
     if (!val)
@@ -503,7 +491,7 @@ int av_opt_set(void *obj, const char *name, const char *val, int search_flags)
     const AVOption *o = av_opt_find2(obj, name, NULL, 0, search_flags, &target_obj);
     if (!o || !target_obj)
         return AVERROR_OPTION_NOT_FOUND;
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
     if (!val && (o->type != AV_OPT_TYPE_STRING &&
                  o->type != AV_OPT_TYPE_PIXEL_FMT && o->type != AV_OPT_TYPE_SAMPLE_FMT &&
                  o->type != AV_OPT_TYPE_IMAGE_SIZE &&
@@ -513,7 +501,7 @@ int av_opt_set(void *obj, const char *name, const char *val, int search_flags)
 #endif
                  o->type != AV_OPT_TYPE_BOOL))
         return AVERROR(EINVAL);
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 
     if (o->flags & AV_OPT_FLAG_READONLY)
         return AVERROR(EINVAL);
@@ -570,7 +558,7 @@ int av_opt_set(void *obj, const char *name, const char *val, int search_flags)
     case AV_OPT_TYPE_COLOR:
         return set_string_color(obj, o, val, dst);
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
     case AV_OPT_TYPE_CHANNEL_LAYOUT:
         if (!val || !strcmp(val, "none")) {
             *(int64_t *)dst = 0;
@@ -584,7 +572,7 @@ int av_opt_set(void *obj, const char *name, const char *val, int search_flags)
             return ret;
         }
         break;
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
     case AV_OPT_TYPE_CHLAYOUT:
         ret = set_string_channel_layout(obj, o, val, dst);
@@ -595,8 +583,6 @@ int av_opt_set(void *obj, const char *name, const char *val, int search_flags)
         return ret;
     case AV_OPT_TYPE_DICT:
         return set_string_dict(obj, o, val, dst);
-    default:
-        break;
     }
 
     av_log(obj, AV_LOG_ERROR, "Invalid option type.\n");
@@ -759,7 +745,7 @@ int av_opt_set_sample_fmt(void *obj, const char *name, enum AVSampleFormat fmt, 
 }
 
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
 int av_opt_set_channel_layout(void *obj, const char *name, int64_t cl, int search_flags)
 {
     void *target_obj;
@@ -775,7 +761,7 @@ int av_opt_set_channel_layout(void *obj, const char *name, int64_t cl, int searc
     *(int64_t *)(((uint8_t *)target_obj) + o->offset) = cl;
     return 0;
 }
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
 
 int av_opt_set_dict_val(void *obj, const char *name, const AVDictionary *val,
@@ -852,8 +838,7 @@ int av_opt_get(void *obj, const char *name, int search_flags, uint8_t **out_val)
 {
     void *dst, *target_obj;
     const AVOption *o = av_opt_find2(obj, name, NULL, 0, search_flags, &target_obj);
-    uint8_t *bin;
-    char buf[128];
+    uint8_t *bin, buf[128];
     int len, i, ret;
     int64_t i64;
 
@@ -897,12 +882,12 @@ int av_opt_get(void *obj, const char *name, int search_flags, uint8_t **out_val)
         break;
     case AV_OPT_TYPE_STRING:
         if (*(uint8_t **)dst) {
-            *out_val = (uint8_t *)av_strdup(*(char **)dst);
+            *out_val = av_strdup(*(uint8_t **)dst);
         } else if (search_flags & AV_OPT_ALLOW_NULL) {
             *out_val = NULL;
             return 0;
         } else {
-            *out_val = (uint8_t *)av_strdup("");
+            *out_val = av_strdup("");
         }
         return *out_val ? 0 : AVERROR(ENOMEM);
     case AV_OPT_TYPE_BINARY:
@@ -921,7 +906,7 @@ int av_opt_get(void *obj, const char *name, int search_flags, uint8_t **out_val)
         }
         bin = *(uint8_t **)dst;
         for (i = 0; i < len; i++)
-            snprintf((char *)(*out_val + i * 2), 3, "%02X", bin[i]);
+            snprintf(*out_val + i * 2, 3, "%02X", bin[i]);
         return 0;
     case AV_OPT_TYPE_IMAGE_SIZE:
         ret = snprintf(buf, sizeof(buf), "%dx%d", ((int *)dst)[0], ((int *)dst)[1]);
@@ -935,7 +920,7 @@ int av_opt_get(void *obj, const char *name, int search_flags, uint8_t **out_val)
     case AV_OPT_TYPE_DURATION:
         i64 = *(int64_t *)dst;
         format_duration(buf, sizeof(buf), i64);
-        ret = strlen(buf);  //no overflow possible, checked by an assert
+        ret = strlen(buf); // no overflow possible, checked by an assert
         break;
     case AV_OPT_TYPE_COLOR:
         ret = snprintf(buf, sizeof(buf), "0x%02x%02x%02x%02x",
@@ -943,13 +928,13 @@ int av_opt_get(void *obj, const char *name, int search_flags, uint8_t **out_val)
                        (int)((uint8_t *)dst)[2], (int)((uint8_t *)dst)[3]);
         break;
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
     case AV_OPT_TYPE_CHANNEL_LAYOUT:
 
         i64 = *(int64_t *)dst;
         ret = snprintf(buf, sizeof(buf), "0x%"PRIx64, i64);
         break;
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
     case AV_OPT_TYPE_CHLAYOUT:
         ret = av_channel_layout_describe(dst, buf, sizeof(buf));
@@ -964,9 +949,9 @@ int av_opt_get(void *obj, const char *name, int search_flags, uint8_t **out_val)
         return AVERROR(EINVAL);
     }
 
-    if (ret >= (int)sizeof(buf))
+    if (ret >= sizeof(buf))
         return AVERROR(EINVAL);
-    *out_val = (uint8_t *)av_strdup(buf);
+    *out_val = av_strdup(buf);
     return *out_val ? 0 : AVERROR(ENOMEM);
 }
 
@@ -1096,7 +1081,7 @@ int av_opt_get_sample_fmt(void *obj, const char *name, int search_flags, enum AV
 }
 
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
 int av_opt_get_channel_layout(void *obj, const char *name, int search_flags, int64_t *cl)
 {
     void *dst, *target_obj;
@@ -1113,7 +1098,7 @@ int av_opt_get_channel_layout(void *obj, const char *name, int search_flags, int
     *cl = *(int64_t *)dst;
     return 0;
 }
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
 
 int av_opt_get_chlayout(void *obj, const char *name, int search_flags, AVChannelLayout *cl)
@@ -1325,9 +1310,9 @@ static void opt_list(void *obj, void *av_log_obj, const char *unit,
                 break;
             case AV_OPT_TYPE_CHLAYOUT:
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
             case AV_OPT_TYPE_CHANNEL_LAYOUT:
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
                 av_log(av_log_obj, AV_LOG_INFO, "%-12s ", "<channel_layout>");
                 break;
@@ -1374,8 +1359,6 @@ static void opt_list(void *obj, void *av_log_obj, const char *unit,
                     log_value(av_log_obj, AV_LOG_INFO, r->range[i]->value_max);
                     av_log(av_log_obj, AV_LOG_INFO, ")");
                 }
-                break;
-            default:
                 break;
             }
             av_opt_freep_ranges(&r);
@@ -1444,14 +1427,12 @@ static void opt_list(void *obj, void *av_log_obj, const char *unit,
                 av_log(av_log_obj, AV_LOG_INFO, "\"%s\"", opt->default_val.str);
                 break;
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
             case AV_OPT_TYPE_CHANNEL_LAYOUT:
                 av_log(av_log_obj, AV_LOG_INFO, "0x%"PRIx64, opt->default_val.i64);
                 break;
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
-            default:
-                break;
             }
             av_log(av_log_obj, AV_LOG_INFO, ")");
         }
@@ -1502,9 +1483,9 @@ void av_opt_set_defaults2(void *s, int mask, int flags)
             case AV_OPT_TYPE_UINT64:
             case AV_OPT_TYPE_DURATION:
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
             case AV_OPT_TYPE_CHANNEL_LAYOUT:
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
             case AV_OPT_TYPE_PIXEL_FMT:
             case AV_OPT_TYPE_SAMPLE_FMT:
@@ -1811,18 +1792,18 @@ const AVOption *av_opt_find2(void *obj, const char *name, const char *unit,
         if (search_flags & AV_OPT_SEARCH_FAKE_OBJ) {
             void *iter = NULL;
             const AVClass *child;
-            while ((child = av_opt_child_class_iterate(c, &iter)))
-                if ((o = av_opt_find2(&child, name, unit, opt_flags, search_flags, NULL)))
+            while (child = av_opt_child_class_iterate(c, &iter))
+                if (o = av_opt_find2(&child, name, unit, opt_flags, search_flags, NULL))
                     return o;
         } else {
             void *child = NULL;
-            while ((child = av_opt_child_next(obj, child)))
-                if ((o = av_opt_find2(child, name, unit, opt_flags, search_flags, target_obj)))
+            while (child = av_opt_child_next(obj, child))
+                if (o = av_opt_find2(child, name, unit, opt_flags, search_flags, target_obj))
                     return o;
         }
     }
 
-    while ((o = av_opt_next(obj, o))) {
+    while (o = av_opt_next(obj, o)) {
         if (!strcmp(o->name, name) && (o->flags & opt_flags) == opt_flags &&
             ((!unit && o->type != AV_OPT_TYPE_CONST) ||
              (unit  && o->type == AV_OPT_TYPE_CONST && o->unit && !strcmp(o->unit, unit)))) {
@@ -1870,9 +1851,9 @@ static int opt_size(enum AVOptionType type)
         return sizeof(int);
     case AV_OPT_TYPE_DURATION:
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
     case AV_OPT_TYPE_CHANNEL_LAYOUT:
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
     case AV_OPT_TYPE_INT64:
     case AV_OPT_TYPE_UINT64:
@@ -1896,8 +1877,6 @@ static int opt_size(enum AVOptionType type)
         return sizeof(enum AVSampleFormat);
     case AV_OPT_TYPE_COLOR:
         return 4;
-    default:
-        break;
     }
     return AVERROR(EINVAL);
 }
@@ -1924,7 +1903,7 @@ int av_opt_copy(void *dst, const void *src)
         if (o->type == AV_OPT_TYPE_STRING) {
             if (*field_dst8 != *field_src8)
                 av_freep(field_dst8);
-            *field_dst8 = (unsigned char *)av_strdup((char *)*field_src8);
+            *field_dst8 = av_strdup(*field_src8);
             if (*field_src8 && !*field_dst8)
                 ret = AVERROR(ENOMEM);
         } else if (o->type == AV_OPT_TYPE_BINARY) {
@@ -1938,7 +1917,7 @@ int av_opt_copy(void *dst, const void *src)
             }
             *(int *)(field_dst8 + 1) = len;
         } else if (o->type == AV_OPT_TYPE_CONST) {
-             //do nothing
+            // do nothing
         } else if (o->type == AV_OPT_TYPE_DICT) {
             AVDictionary **sdict = (AVDictionary **) field_src;
             AVDictionary **ddict = (AVDictionary **) field_dst;
@@ -2016,14 +1995,14 @@ int av_opt_query_ranges_default(AVOptionRanges **ranges_arg, void *obj, const ch
     case AV_OPT_TYPE_DURATION:
     case AV_OPT_TYPE_COLOR:
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
     case AV_OPT_TYPE_CHANNEL_LAYOUT:
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
         break;
     case AV_OPT_TYPE_STRING:
         range->component_min = 0;
-        range->component_max = 0x10FFFF;  //max unicode value
+        range->component_max = 0x10FFFF; // max unicode value
         range->value_min = -1;
         range->value_max = INT_MAX;
         break;
@@ -2100,9 +2079,9 @@ int av_opt_is_set_to_default(void *obj, const AVOption *o)
     case AV_OPT_TYPE_SAMPLE_FMT:
     case AV_OPT_TYPE_INT:
 #if FF_API_OLD_CHANNEL_LAYOUT
- FF_DISABLE_DEPRECATION_WARNINGS
+FF_DISABLE_DEPRECATION_WARNINGS
     case AV_OPT_TYPE_CHANNEL_LAYOUT:
- FF_ENABLE_DEPRECATION_WARNINGS
+FF_ENABLE_DEPRECATION_WARNINGS
 #endif
     case AV_OPT_TYPE_DURATION:
     case AV_OPT_TYPE_INT64:
@@ -2146,7 +2125,7 @@ int av_opt_is_set_to_default(void *obj, const AVOption *o)
             return 1;
         if (!opt_size ||  !o->default_val.str || !strlen(o->default_val.str ))
             return 0;
-        if (opt_size != (int)strlen(o->default_val.str) / 2)
+        if (opt_size != strlen(o->default_val.str) / 2)
             return 0;
         ret = set_string_binary(NULL, NULL, o->default_val.str, &tmp.data);
         if (!ret)
@@ -2232,7 +2211,7 @@ int av_opt_serialize(void *obj, int opt_flags, int flags, char **buffer,
     *buffer = NULL;
     av_bprint_init(&bprint, 64, AV_BPRINT_SIZE_UNLIMITED);
 
-    while ((o = av_opt_next(obj, o))) {
+    while (o = av_opt_next(obj, o)) {
         if (o->type == AV_OPT_TYPE_CONST)
             continue;
         if ((flags & AV_OPT_SERIALIZE_OPT_FLAGS_EXACT) && o->flags != opt_flags)
@@ -2250,7 +2229,7 @@ int av_opt_serialize(void *obj, int opt_flags, int flags, char **buffer,
                 av_bprint_append_data(&bprint, &pairs_sep, 1);
             av_bprint_escape(&bprint, o->name, special_chars, AV_ESCAPE_MODE_BACKSLASH, 0);
             av_bprint_append_data(&bprint, &key_val_sep, 1);
-            av_bprint_escape(&bprint, (char *)buf, special_chars, AV_ESCAPE_MODE_BACKSLASH, 0);
+            av_bprint_escape(&bprint, buf, special_chars, AV_ESCAPE_MODE_BACKSLASH, 0);
             av_freep(&buf);
         }
     }

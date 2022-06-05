@@ -373,7 +373,7 @@ static av_cold int mediacodec_decode_init(AVCodecContext *avctx)
         break;
 #endif
     default:
-        av_assert0(0);
+      //avassert0(0);
     }
 
     ff_AMediaFormat_setString(format, "mime", codec_mime);

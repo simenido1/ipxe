@@ -51,8 +51,6 @@
 #include "rectangle.h"
 #include "thread.h"
 #include "threadframe.h"
-#include "libavutil/internal.h"
-#include <string.h>
 
 const uint16_t ff_h264_mb_sizes[4] = { 256, 384, 512, 768 };
 
@@ -68,10 +66,7 @@ static void h264_er_decode_mb(void *opaque, int ref, int mv_dir, int mv_type,
 {
     H264Context *h = opaque;
     H264SliceContext *sl = &h->slice_ctx[0];
-    (void)mv_dir;
-    (void)mv_type;
-    (void)mb_intra;
-    (void)mb_skipped;
+
     sl->mb_x = mb_x;
     sl->mb_y = mb_y;
     sl->mb_xy = mb_x + mb_y * h->mb_stride;
@@ -81,7 +76,7 @@ static void h264_er_decode_mb(void *opaque, int ref, int mv_dir, int mv_type,
      * differ between slices. We take the easy approach and ignore
      * it for now. If this turns out to have any relevance in
      * practice then correct remapping should be added. */
-    if (ref >= (int)sl->ref_count[0])
+    if (ref >= sl->ref_count[0])
         ref = 0;
     if (!sl->ref_list[0][ref].data[0]) {
         av_log(h->avctx, AV_LOG_DEBUG, "Reference not available for error concealing\n");
@@ -104,7 +99,6 @@ static void h264_er_decode_mb(void *opaque, int ref, int mv_dir, int mv_type,
 void ff_h264_draw_horiz_band(const H264Context *h, H264SliceContext *sl,
                              int y, int height)
 {
-    (void)sl;
     AVCodecContext *avctx = h->avctx;
     const AVFrame   *src  = h->cur_pic.f;
     const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(avctx->pix_fmt);
@@ -306,7 +300,7 @@ static int h264_init_context(AVCodecContext *avctx, H264Context *h)
     h->sei.unregistered.x264_build = -1;
 
     h->next_outputed_poc = INT_MIN;
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(h->last_pocs); i++)
+    for (i = 0; i < FF_ARRAY_ELEMS(h->last_pocs); i++)
         h->last_pocs[i] = INT_MIN;
 
     ff_h264_sei_uninit(&h->sei);
@@ -443,7 +437,7 @@ static void idr(H264Context *h)
     h->poc.prev_frame_num_offset = 0;
     h->poc.prev_poc_msb          = 1<<16;
     h->poc.prev_poc_lsb          = -1;
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(h->last_pocs); i++)
+    for (i = 0; i < FF_ARRAY_ELEMS(h->last_pocs); i++)
         h->last_pocs[i] = INT_MIN;
 }
 
@@ -640,7 +634,6 @@ static int decode_nal_units(H264Context *h, const uint8_t *buf, int buf_size)
             }
             idr_cleared = 1;
             h->has_recovery_point = 1;
-            __attribute__(( fallthrough ));
         case H264_NAL_SLICE:
             h->has_slice = 1;
 
@@ -827,8 +820,8 @@ static int h264_export_enc_params(AVFrame *f, H264Picture *p)
     par->delta_qp[2][0] = p->pps->chroma_qp_index_offset[1];
     par->delta_qp[2][1] = p->pps->chroma_qp_index_offset[1];
 
-    for (y = 0; (int)y < p->mb_height; y++)
-        for (x = 0; (int)x < p->mb_width; x++) {
+    for (y = 0; y < p->mb_height; y++)
+        for (x = 0; x < p->mb_width; x++) {
             const unsigned int block_idx = y * p->mb_width + x;
             const unsigned int     mb_xy = y * p->mb_stride + x;
             AVVideoBlockParams *b = av_video_enc_params_block(par, block_idx);
@@ -1025,7 +1018,7 @@ static int h264_decode_frame(AVCodecContext *avctx, AVFrame *pict,
 
     if (!(avctx->flags2 & AV_CODEC_FLAG2_CHUNKS) && (!h->cur_pic_ptr || !h->has_slice)) {
         if (avctx->skip_frame >= AVDISCARD_NONREF ||
-            (buf_size >= 4 && !memcmp("Q264", buf, 4)))
+            buf_size >= 4 && !memcmp("Q264", buf, 4))
             return buf_size;
         av_log(avctx, AV_LOG_ERROR, "no frame!\n");
         return AVERROR_INVALIDDATA;
@@ -1055,10 +1048,10 @@ static int h264_decode_frame(AVCodecContext *avctx, AVFrame *pict,
 #define VD AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_DECODING_PARAM
 #define VDX VD | AV_OPT_FLAG_EXPORT
 static const AVOption h264_options[] = {
-    { "is_avc", "is avc", OFFSET(is_avc), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, VDX, "" },
-    { "nal_length_size", "nal_length_size", OFFSET(nal_length_size), AV_OPT_TYPE_INT, {.i64 = 0}, 0, 4, VDX, "" },
-    { "enable_er", "Enable error resilience on damaged frames (unsafe)", OFFSET(enable_er), AV_OPT_TYPE_BOOL, { .i64 = -1 }, -1, 1, VD, "" },
-    { "x264_build", "Assume this x264 version if no x264 version found in any SEI", OFFSET(x264_build), AV_OPT_TYPE_INT, {.i64 = -1}, -1, INT_MAX, VD, "" },
+    { "is_avc", "is avc", OFFSET(is_avc), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, VDX },
+    { "nal_length_size", "nal_length_size", OFFSET(nal_length_size), AV_OPT_TYPE_INT, {.i64 = 0}, 0, 4, VDX },
+    { "enable_er", "Enable error resilience on damaged frames (unsafe)", OFFSET(enable_er), AV_OPT_TYPE_BOOL, { .i64 = -1 }, -1, 1, VD },
+    { "x264_build", "Assume this x264 version if no x264 version found in any SEI", OFFSET(x264_build), AV_OPT_TYPE_INT, {.i64 = -1}, -1, INT_MAX, VD },
     { NULL },
 };
 

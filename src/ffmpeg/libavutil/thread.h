@@ -34,7 +34,7 @@
 #include <stdlib.h>
 
 #include "error.h"
-#include "log.h"
+#include "avutil_log.h"
 #include "macros.h"
 
 #define ASSERT_PTHREAD_ABORT(func, ret) do {                            \
@@ -168,10 +168,10 @@ static inline int strict_pthread_once(pthread_once_t *once_control, void (*init_
 #define AVMutex char
 #define AV_MUTEX_INITIALIZER 0
 
-//static inline int ff_mutex_init(AVMutex *mutex, const void *attr){ return 0; }
-//static inline int ff_mutex_lock(AVMutex *mutex){ return 0; }
-//static inline int ff_mutex_unlock(AVMutex *mutex){ return 0; }
-//static inline int ff_mutex_destroy(AVMutex *mutex){ return 0; }
+static inline int ff_mutex_init(AVMutex *mutex, const void *attr){ return 0; }
+static inline int ff_mutex_lock(AVMutex *mutex){ return 0; }
+static inline int ff_mutex_unlock(AVMutex *mutex){ return 0; }
+static inline int ff_mutex_destroy(AVMutex *mutex){ return 0; }
 
 #define AVOnce char
 #define AV_ONCE_INIT 0

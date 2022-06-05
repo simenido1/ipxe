@@ -76,7 +76,7 @@ static int h263_parse(AVCodecParserContext *s,
 {
     ParseContext *pc = s->priv_data;
     int next;
-    (void)avctx;
+
     if (s->flags & PARSER_FLAG_COMPLETE_FRAMES) {
         next = buf_size;
     } else {

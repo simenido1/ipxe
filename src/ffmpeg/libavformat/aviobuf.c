@@ -33,8 +33,6 @@
 #include "internal.h"
 #include "url.h"
 #include <stdarg.h>
-#include <string.h>
-#include <stdint.h>
 
 #define IO_BUFFER_SIZE 32768
 
@@ -62,7 +60,7 @@ static const AVClass *child_class_iterate(void **iter)
 #define E AV_OPT_FLAG_ENCODING_PARAM
 #define D AV_OPT_FLAG_DECODING_PARAM
 static const AVOption ff_avio_options[] = {
-    {"protocol_whitelist", "List of protocols that are allowed to be used", OFFSET(protocol_whitelist), AV_OPT_TYPE_STRING, { .str = NULL },  0, 0, D, ""},
+    {"protocol_whitelist", "List of protocols that are allowed to be used", OFFSET(protocol_whitelist), AV_OPT_TYPE_STRING, { .str = NULL },  0, 0, D },
     { NULL },
 };
 
@@ -414,7 +412,7 @@ int avio_put_str(AVIOContext *s, const char *str)
 
 static inline int put_str16(AVIOContext *s, const char *str, const int be)
 {
-    const uint8_t *q = (const uint8_t *)str;
+    const uint8_t *q = str;
     int ret = 0;
     int err = 0;
 
@@ -516,8 +514,6 @@ void avio_write_marker(AVIOContext *s, int64_t time, enum AVIODataMarkerType typ
         // consecutive header/trailer markers can be merged.
         if (type == ctx->current_type)
             return;
-        break;
-    default:
         break;
     }
 
@@ -849,7 +845,7 @@ static int64_t read_string_to_bprint(AVIOContext *s, AVBPrint *bp,
                    c == '\0');
             if (!end)
                 tmp[len++] = c;
-        } while (!end && len < (int)sizeof(tmp) &&
+        } while (!end && len < sizeof(tmp) &&
                  ((max_len < 0) || (read + len < max_len)));
         av_bprint_append_data(bp, tmp, len);
         read += len;
@@ -1035,7 +1031,7 @@ int ffio_copy_url_options(AVIOContext* pb, AVDictionary** avio_opts)
     while (*opt) {
         if (av_opt_get(pb, *opt, AV_OPT_SEARCH_CHILDREN, &buf) >= 0) {
             if (buf[0] != '\0') {
-                ret = av_dict_set(avio_opts, *opt, (char *)buf, AV_DICT_DONT_STRDUP_VAL);
+                ret = av_dict_set(avio_opts, *opt, buf, AV_DICT_DONT_STRDUP_VAL);
                 if (ret < 0)
                     return ret;
             } else {
@@ -1307,7 +1303,7 @@ int avio_printf(AVIOContext *s, const char *fmt, ...)
         s->error = AVERROR(ENOMEM);
         return AVERROR(ENOMEM);
     }
-    avio_write(s, (uint8_t *)bp.str, bp.len);
+    avio_write(s, bp.str, bp.len);
     av_bprint_finalize(&bp, NULL);
     return bp.len;
 }
@@ -1349,7 +1345,7 @@ int avio_read_to_bprint(AVIOContext *h, AVBPrint *pb, size_t max_size)
     int ret;
     char buf[1024];
     while (max_size) {
-        ret = avio_read(h, (unsigned char *)buf, FFMIN(max_size, sizeof(buf)));
+        ret = avio_read(h, buf, FFMIN(max_size, sizeof(buf)));
         if (ret == AVERROR_EOF)
             return 0;
         if (ret <= 0)
@@ -1395,11 +1391,11 @@ static int dyn_buf_write(void *opaque, uint8_t *buf, int buf_size)
 
     /* reallocate buffer if needed */
     new_size = (unsigned)d->pos + buf_size;
-    if (new_size < (unsigned int)d->pos || new_size > (unsigned int)INT_MAX)
+    if (new_size < d->pos || new_size > INT_MAX)
         return AVERROR(ERANGE);
-    if (new_size > (unsigned int)d->allocated_size) {
+    if (new_size > d->allocated_size) {
         unsigned new_allocated_size = d->allocated_size ? d->allocated_size
-                                                        : (int)new_size;
+                                                        : new_size;
         int err;
         while (new_size > new_allocated_size)
             new_allocated_size += new_allocated_size / 2 + 1;
@@ -1559,8 +1555,8 @@ void ffio_free_dyn_buf(AVIOContext **s)
 
 static int null_buf_write(void *opaque, uint8_t *buf, int buf_size)
 {
-    (void)buf;
     DynBuffer *d = opaque;
+
     d->pos += buf_size;
     if (d->pos > d->size)
         d->size = d->pos;

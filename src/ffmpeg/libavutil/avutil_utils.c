@@ -98,7 +98,7 @@ char av_get_picture_type_char(enum AVPictureType pict_type)
 unsigned av_int_list_length_for_size(unsigned elsize,
                                      const void *list, uint64_t term)
 {
-    unsigned i = 0;
+    unsigned i;
 
     if (!list)
         return 0;
@@ -130,7 +130,7 @@ char *av_fourcc_make_string(char *buf, uint32_t fourcc)
         if (len < 0)
             break;
         buf += len;
-        buf_size = (int)buf_size > len ? buf_size - len : 0;
+        buf_size = buf_size > len ? buf_size - len : 0;
         fourcc >>= 8;
     }
 
@@ -151,6 +151,6 @@ void av_assert0_fpu(void) {
         :
         : "memory"
     );
-    av_assert0((state[4] & 3) == 3);
+    //av_assert0((state[4] & 3) == 3);
 #endif
 }

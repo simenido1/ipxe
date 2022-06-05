@@ -34,7 +34,7 @@ static const char *exif_get_tag_name(uint16_t id)
 {
     int i;
 
-    for (i = 0; i < (int)FF_ARRAY_ELEMS(tag_list); i++) {
+    for (i = 0; i < FF_ARRAY_ELEMS(tag_list); i++) {
         if (tag_list[i].id == id)
             return tag_list[i].name;
     }
