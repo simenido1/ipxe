@@ -92,3 +92,8 @@ long int lrintf(float x)
 {
 	return rint(x);
 }
+
+long int lrint(double x)
+{
+    return rint(x);
+}

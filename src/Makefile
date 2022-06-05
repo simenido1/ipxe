@@ -70,6 +70,7 @@ SRCDIRS		+= ffmpeg
 SRCDIRS		+= ffmpeg/libavutil
 SRCDIRS		+= ffmpeg/libavformat
 SRCDIRS		+= ffmpeg/libavcodec
+SRCDIRS		+= ffmpeg/libswscale
 SRCDIRS		+= ffmpeg/fdlibm
 SRCDIRS		+= image
 SRCDIRS		+= drivers/bus
@@ -147,6 +148,8 @@ NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264pred_template.c
 NON_AUTO_SRCS	+= ffmpeg/libavcodec/h264idct_template.c
 NON_AUTO_SRCS	+= ffmpeg/libavcodec/simple_idct_template.c
 NON_AUTO_SRCS	+= ffmpeg/libavcodec/jfdctint_template.c
+NON_AUTO_SRCS	+= ffmpeg/libswscale/bayer_template.c
+NON_AUTO_SRCS	+= ffmpeg/libswscale/rgb2rgb_template.c
 # INCDIRS lists the include path
 #
 INCDIRS		:=

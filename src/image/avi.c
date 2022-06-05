@@ -125,6 +125,42 @@ int read_buffer(void *opaque, uint8_t *buf, int buf_size){
 //     image_internal_position = final_pos;
 //     return 0;
 // }
+static AVFrame *avi_alloc_picture(enum AVPixelFormat pix_fmt, int width, int height)
+{
+    AVFrame *picture;
+    int ret;
+    picture = av_frame_alloc();
+    if (!picture)
+        return NULL;
+    picture->format = pix_fmt;
+    picture->width  = width;
+    picture->height = height;
+    /* allocate the buffers for the frame data */
+    ret = av_frame_get_buffer(picture, 0);
+    if (ret < 0) {
+        printf("Cannot allocate buffers for picture!\n");
+        return NULL;
+    }
+    return picture;
+}
+
+void change_pixel_format(AVFrame *pFrame)
+{
+    AVFrame * resFrame = avi_alloc_picture(AV_PIX_FMT_RGB24, pFrame->width, pFrame->height);
+    struct SwsContext * ctx = sws_getContext(pFrame->width,
+                                      pFrame->height,
+                                      AV_PIX_FMT_YUV420P,
+                                      pFrame->width,
+                                      pFrame->height,
+                                      AV_PIX_FMT_RGB24,
+                                      0, 0, 0, 0);
+    sws_scale(ctx, (const uint8_t *const *) pFrame->data, pFrame->linesize, 0,
+              pFrame->height, resFrame->data, resFrame->linesize);
+    sws_freeContext(ctx);
+    printf("pixel format changed successfully!\n");
+    av_frame_free(&resFrame);
+}
+
 
 /**
  * Probe AVI image
@@ -254,7 +290,8 @@ for (int i = 0; i < pFormatContext->nb_streams; i++)
                 {
                     indexOfFrame++;
                     //SaveToJPEG(pFrame, argv[2], indexOfFrame);
-                    printf("data %p, type = %d, quality=%d\n", pFrame->data, pFrame->pict_type, pFrame->quality);
+                    //printf("data %p, type = %d, quality=%d\n", pFrame->data, pFrame->pict_type, pFrame->quality);
+                    change_pixel_format(pFrame);
                 }
             }
         }

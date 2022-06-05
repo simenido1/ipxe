@@ -168,6 +168,7 @@ extern int ilogb __P((double));
 extern double rint __P((double));
 extern long long llrint __P((double));
 extern long int lrintf __P((float));
+extern long int lrint __P((double));
 extern double scalbn __P((double, int));
 
 /*
