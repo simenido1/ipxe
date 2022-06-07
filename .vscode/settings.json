@@ -61,7 +61,11 @@
         "image.h": "c",
         "defaults.h": "c",
         "cmath": "c",
-        "error.h": "c"
+        "error.h": "c",
+        "ansicol.h": "c",
+        "unistd.h": "c",
+        "vesafb.h": "c",
+        "fbcon.h": "c"
     },
     "C_Cpp.errorSquiggles": "Enabled",
     "C_Cpp.intelliSenseEngineFallback": "Enabled",

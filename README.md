@@ -13,4 +13,9 @@ variable syntax is equal to "set" command. For example:
 ``` 
 After user prompts, you can use variable "var" via ${ }, show, clear, set etc. ASCII code of the read symbol will be stored in the variable.  
 
+Added AVI video playing to prompt function, usage:
+```
+   prompt --video=tftp://192.168.0.103/test.avi
+```
+MPEG-4 codecs (H264, AVC, XVID) are supported.
 For any more detailed instructions, see http://ipxe.org

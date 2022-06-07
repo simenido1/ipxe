@@ -21,7 +21,7 @@
  * COPYING.UBDL), provided that you have satisfied its requirements.
  */
 
-FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
+FILE_LICENCE(GPL2_OR_LATER_OR_UBDL);
 
 /** @file
  *
@@ -35,7 +35,12 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 #include <usr/prompt.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <ipxe/pixbuf.h>
+#include <ipxe/image.h>
+#include <usr/imgmgmt.h>
+#include <ipxe/ansicol.h>
+#include <ipxe/avi.h>
+#include <unistd.h>
 /**
  * Prompt for keypress
  *
@@ -47,38 +52,86 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
  * Returns success if the specified key was pressed within the
  * specified timeout period.
  */
-int prompt ( const char *text, unsigned long timeout, int key, const char *variable ) {
-	int key_pressed;
+extern int vesafb_update_pixbuf(struct pixel_buffer *pixbuf); // function to update background image with new frame
+int prompt(const char *text, unsigned long timeout, int key, const char *variable, const char *video)
+{
+	int key_pressed = -1;
+	// struct console_configuration console_config;
+	if (video)
+	{
+		char *command;
+		struct pixel_buffer *pixbuf;
+		asprintf(&command, "console --picture=%s --keep", video);
+		if (system(command) != 0)
+		{
+			goto video_error;
+		}
+		free(command);
 
-	/* Display prompt */
-	printf ( "%s", text );
+		double framerate = avi_get_framerate();
+		if (framerate <= 0)
+		{
+			// printf("avi framerate error!");
+			goto video_error;
+		}
+		/* Display prompt */
+		printf("%s", text);
+		unsigned long start = currticks();
+		int ret = 0;
+		int indexOfFrame = 0;
+		while (((timeout == 0) || (currticks() - start) < timeout) && key_pressed < 0 && ret >= 0)
+		{
+			if ((ret = avi_get_next_frame(&pixbuf)) != 0)
+			{
+				printf("avi_get_next_frame error!, frame=%d\n", indexOfFrame);
+			}
+			else
+			{
+				indexOfFrame++;
+				if ((ret = vesafb_update_pixbuf(pixbuf)) != 0)
+				{
+					printf("vesafb_update_pixbuf error!, frame=%d\n", indexOfFrame);
+				}
+			}
+			pixbuf_put(pixbuf);
+			// usleep(1000000 / framerate);
+			key_pressed = getkey(1000 / framerate);
+		}
+	}
+	else
+	{
+	video_error:
+		/* Display prompt */
+		printf("%s", text);
 
-	/* Wait for key */
-	key_pressed = getkey ( timeout );
-
+		/* Wait for key */
+		key_pressed = getkey(timeout);
+	}
 	/* Clear the prompt line */
-	while ( *(text++) )
-		printf ( "\b \b" );
+	while (*(text++))
+		printf("\b \b");
 
 	/* Check for timeout */
-	if ( key_pressed < 0 )
+	if (key_pressed < 0)
 		return -ETIMEDOUT;
 
-
 	/* Write key value to variable */
-	if(variable != NULL && variable != "") {
+	if (variable != NULL && variable != "")
+	{
 		char *command;
 		int rc;
-		if ((rc = asprintf(&command, "set %s %i", variable, key_pressed)) < 0) {
+		if ((rc = asprintf(&command, "set %s %i", variable, key_pressed)) < 0)
+		{
 			return rc;
 		}
-		if ((rc = system(command)) != 0) { //execute "set" command
+		if ((rc = system(command)) != 0)
+		{ // execute "set" command
 			return rc;
 		}
-		free(command); //free memory used for command
+		free(command); // free memory used for command
 	}
 	/* Check for correct key pressed */
-	if ( key && ( key_pressed != key ) )
+	if (key && (key_pressed != key))
 		return -ECANCELED;
 
 	return 0;

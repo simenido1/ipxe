@@ -15,7 +15,9 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 #include <ffmpeg/libswscale/swscale.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <ipxe/pixbuf.h>
 
 extern struct image_type avi_image_type __image_type ( PROBE_NORMAL );
-
+int avi_get_next_frame(struct pixel_buffer ** pixbuf); //pixel buffer to be filled with avcodec
+double avi_get_framerate(void);
 #endif /* _IPXE_AVI_H */

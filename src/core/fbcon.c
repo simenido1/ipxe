@@ -720,3 +720,23 @@ void fbcon_fini ( struct fbcon *fbcon ) {
 	ufree ( fbcon->text.start );
 	ufree ( fbcon->picture.start );
 }
+
+int fbcon_update_pixbuf(struct fbcon *fbcon, struct pixel_buffer * pixbuf)
+{
+	/* Set framebuffer to all black (including margins) */
+	//memset_user ( fbcon->start, 0, 0, fbcon->len );
+	int rc = 0;
+	/* Generate pixel buffer from background image, if applicable */
+	if (( rc = fbcon_picture_init ( fbcon, pixbuf ) ) != 0)
+	{
+		return rc;
+	}
+
+
+	/* Draw background picture (including margins), if applicable */
+	if ( fbcon->picture.start ) {
+		memcpy_user ( fbcon->start, 0, fbcon->picture.start, 0,
+			      fbcon->len );
+	}
+	return 0;
+}

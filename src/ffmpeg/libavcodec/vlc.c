@@ -280,7 +280,6 @@ int ff_init_vlc_sparse(VLC *vlc, int nb_bits, int nb_codes,
 
     ret = vlc_common_init(vlc, nb_bits, nb_codes, &buf, flags);
     if (ret < 0) {
-        printf("vlc 283, ret=%d\n");
         return ret;
     }
     //av_assert0(symbols_size <= 2 || !symbols);
@@ -322,13 +321,8 @@ int ff_init_vlc_sparse(VLC *vlc, int nb_bits, int nb_codes,
     COPY(len && len <= nb_bits);
     nb_codes = j;
 
-    ret = vlc_common_end(vlc, nb_bits, nb_codes, buf,
+    return vlc_common_end(vlc, nb_bits, nb_codes, buf,
                           flags, localbuf);
-    if (ret < 0)
-    {
-        printf("vlc 329, ret=%d\n", ret);
-    }
-    return ret;
 }
 
 int ff_init_vlc_from_lengths(VLC *vlc, int nb_bits, int nb_codes,

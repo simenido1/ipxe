@@ -269,8 +269,6 @@ int ff_alloc_picture(AVCodecContext *avctx, Picture *pic, MotionEstContext *me,
         if (alloc_frame_buffer(avctx, pic, me, sc,
                                chroma_x_shift, chroma_y_shift,
                                *linesize, *uvlinesize) < 0) {
-            
-            printf("mpegpicture 273\n");
             return -1;
                                }
 

@@ -39,7 +39,7 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 #include <ipxe/fbcon.h>
 #include <ipxe/vesafb.h>
 #include <config/console.h>
-
+#include <unistd.h>
 /* Avoid dragging in BIOS console if not otherwise used */
 extern struct console_driver bios_console;
 struct console_driver bios_console __attribute__ (( weak ));
@@ -454,8 +454,9 @@ static int vesafb_init ( struct console_configuration *config ) {
 	DBGC ( &vbe_buf, "VESAFB saved VGA mode %#02x\n", vesafb.saved_mode );
 
 	/* Get VESA mode list */
-	if ( ( rc = vesafb_mode_list ( &mode_numbers ) ) != 0 )
+	if ( ( rc = vesafb_mode_list ( &mode_numbers ) ) != 0 ) {
 		goto err_mode_list;
+	}
 
 	/* Select mode */
 	if ( ( mode_number = vesafb_select_mode ( mode_numbers, config->width,
@@ -466,8 +467,9 @@ static int vesafb_init ( struct console_configuration *config ) {
 	}
 
 	/* Set mode */
-	if ( ( rc = vesafb_set_mode ( mode_number ) ) != 0 )
+	if ( ( rc = vesafb_set_mode ( mode_number ) ) != 0 ) {
 		goto err_set_mode;
+	}
 
 	/* Get font data */
 	vesafb_font();
@@ -475,8 +477,9 @@ static int vesafb_init ( struct console_configuration *config ) {
 	/* Initialise frame buffer console */
 	if ( ( rc = fbcon_init ( &vesafb.fbcon, phys_to_user ( vesafb.start ),
 				 &vesafb.pixel, &vesafb.map, &vesafb.font,
-				 config ) ) != 0 )
+				 config ) ) != 0 ) {
 		goto err_fbcon_init;
+				 }
 
 	free ( mode_numbers );
 	return 0;
@@ -522,7 +525,6 @@ static void vesafb_putchar ( int character ) {
  */
 static int vesafb_configure ( struct console_configuration *config ) {
 	int rc;
-
 	/* Reset console, if applicable */
 	if ( ! vesafb_console.disabled ) {
 		vesafb_fini();
@@ -530,7 +532,7 @@ static int vesafb_configure ( struct console_configuration *config ) {
 		ansicol_reset_magic();
 	}
 	vesafb_console.disabled = CONSOLE_DISABLED;
-
+	//bios_console.disabled = CONSOLE_DISABLED;
 	/* Do nothing more unless we have a usable configuration */
 	if ( ( config == NULL ) ||
 	     ( config->width == 0 ) || ( config->height == 0 ) ) {
@@ -538,8 +540,9 @@ static int vesafb_configure ( struct console_configuration *config ) {
 	}
 
 	/* Initialise VESA frame buffer */
-	if ( ( rc = vesafb_init ( config ) ) != 0 )
+	if ( ( rc = vesafb_init ( config ) ) != 0 ) {
 		return rc;
+	}
 
 	/* Mark console as enabled */
 	vesafb_console.disabled = 0;
@@ -550,6 +553,13 @@ static int vesafb_configure ( struct console_configuration *config ) {
 		ansicol_set_magic_transparent();
 
 	return 0;
+}
+
+int vesafb_update_pixbuf(struct pixel_buffer * pixbuf)
+{
+	int ret = fbcon_update_pixbuf(&vesafb.fbcon, pixbuf);
+	fbcon_fini(&vesafb.fbcon);
+	return ret;
 }
 
 /** VESA frame buffer console driver */

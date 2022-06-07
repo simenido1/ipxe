@@ -11,6 +11,7 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 
 #include <stdint.h>
 #include <realmode.h>
+#include <ipxe/pixbuf.h>
 
 /** INT 10,4f00: return controller information */
 #define VBE_CONTROLLER_INFO 0x4f00

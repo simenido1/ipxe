@@ -21,110 +21,136 @@
  * COPYING.UBDL), provided that you have satisfied its requirements.
  */
 
-FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
+FILE_LICENCE(GPL2_OR_LATER_OR_UBDL);
 
 #include <ipxe/avi.h>
 #include <string.h>
+#include <ipxe/umalloc.h>
+#include "libavutil/avutil.h"
 
-static int image_size = 0;
-static int image_internal_position = 0;
-static intptr_t image_start = 0;
+static struct avi_image_context
+{
+    int size;
+    int internal_position;
+    intptr_t start_ptr;
+    int video_stream_index;
+    AVFormatContext *pFormatContext;
+    AVCodecContext *pCodecContext;
+    struct pixel_buffer *pixbuf;
+    double framerate;
+    AVFrame *rgbFrame;
+    AVFrame *pFrame;
+    AVPacket *pPacket;
+    struct SwsContext * sws_ctx;
+} avi_image_context;
 
-// static int my_read (void *opaque, unsigned char *buf, int size)
-// {
-// aviobuffercontext* op = (aviobuffercontext*) opaque;
-// int len = size;
-// if (op->pos + size > Op->totalsize)
-// {
-// Len = op->totalsize-op->pos;
-// }
-// memcpy (buf, Op->ptr + Op->pos, Len);
-// if (Op->pos + len >= op->realsize)
-// Op->realsize + = Len;
-
-// Op->pos + = Len;
-
-// return Len;
-// }
-//Read buffer for avio_alloc_context
-int read_buffer(void *opaque, uint8_t *buf, int buf_size){
-	// if(!feof(fp_open)){
-	// 	int true_size=fread(buf,1,buf_size,fp_open);
-	// 	return true_size;
-	// }else{
-	// 	return -1;
-	// }
-    //printf("%p\n", opaque);
-    //intptr_t actual_ptr = image_start + image_internal_position;
-    if (image_internal_position >= image_size)
+static void avi_image_context_clear(void)
+{
+    avi_image_context.size = 0;
+    avi_image_context.internal_position = 0;
+    avi_image_context.start_ptr = 0;
+    avi_image_context.video_stream_index = -1;
+    avi_image_context.framerate = 0;
+    if (avi_image_context.pFormatContext != NULL)
     {
-        //printf("read_buffer_eof\n");
-        return AVERROR_EOF; //EOF
+        if (avi_image_context.pFormatContext->pb != NULL)
+        {
+            avio_context_free(&(avi_image_context.pFormatContext->pb));
+        }
+        avformat_free_context(avi_image_context.pFormatContext);
+        avi_image_context.pFormatContext = NULL;
+    }
+    if (avi_image_context.pCodecContext != NULL)
+    {
+        avcodec_free_context(&avi_image_context.pCodecContext);
+        avi_image_context.pCodecContext = NULL;
+    }
+    if (avi_image_context.pixbuf != NULL)
+    {
+        ufree(avi_image_context.pixbuf->data);
+        free(avi_image_context.pixbuf);
+        avi_image_context.pixbuf = NULL;
+    }
+    if (avi_image_context.rgbFrame != NULL)
+    {
+        av_frame_unref(avi_image_context.rgbFrame);
+        av_frame_free(&avi_image_context.rgbFrame);
+        avi_image_context.rgbFrame = NULL;
+    }
+    if (avi_image_context.pFrame != NULL)
+    {
+        av_frame_unref(avi_image_context.pFrame);
+        av_frame_free(&avi_image_context.pFrame);
+        avi_image_context.pFrame = NULL;
+    }
+    if (avi_image_context.pPacket != NULL)
+    {
+        av_packet_unref(avi_image_context.pPacket);
+        av_packet_free(&avi_image_context.pPacket);
+        avi_image_context.pPacket = NULL;
+    }
+    if (avi_image_context.sws_ctx != NULL)
+    {
+        sws_freeContext(avi_image_context.sws_ctx);
+        avi_image_context.sws_ctx = NULL;
+    }
+}
+// Read buffer for avio_alloc_context
+int read_buffer(void *opaque, uint8_t *buf, int buf_size)
+{
+    if (avi_image_context.internal_position >= avi_image_context.size)
+    {
+        return AVERROR_EOF; // EOF
     }
     int actual_bytes_read = buf_size;
-    if (image_internal_position + buf_size > image_size)
+    if (avi_image_context.internal_position + buf_size > avi_image_context.size)
     {
-        // printf("read_buffer_eof\n");
-        // return AVERROR_EOF; //EOF
-        actual_bytes_read = image_size - image_internal_position;
+        actual_bytes_read = avi_image_context.size - avi_image_context.internal_position;
     }
-    // if (actual_ptr + buf_size <= image_end)
-    // {
-    //     //printf("%s\n", buf);
-    //     //printf("%d\n", buf_size);
-    //     actual_bytes_read = buf_size;
-
-    // }
-    // else if (actual_ptr < image_end)
-    // {
-    //     //printf("avi 48\n");
-    //     actual_bytes_read = image_end - actual_ptr;
-    // }
-    //memcpy(buf, image_start + image_internal_position, actual_bytes_read);
-    copy_from_user(buf, image_start, image_internal_position, actual_bytes_read);
-    image_internal_position += actual_bytes_read;
-    //printf("actual_bytes_read=%d, internal_position=%d, size=%d\n", actual_bytes_read, image_internal_position, image_size);
+    // memcpy(buf, image_start + image_internal_position, actual_bytes_read);
+    copy_from_user(buf, avi_image_context.start_ptr, avi_image_context.internal_position, actual_bytes_read);
+    avi_image_context.internal_position += actual_bytes_read;
+    // printf("actual_bytes_read=%d, internal_position=%d, size=%d\n", actual_bytes_read, image_internal_position, image_size);
     return actual_bytes_read;
 }
 
-// int seek_buffer(void *opaque, int64_t offset, int whence)
-// {
-//     int start_pos = 0;
-//     switch (whence)
-//     {
-//         case SEEK_SET:
-//             start_pos = 0;
-//             break;
-//         case SEEK_CUR:
-//             start_pos = image_internal_position;
-//             break;
-//         case SEEK_END:
-//             start_pos = image_size;
-//             break;
-//         case AVSEEK_SIZE:
-//             return image_size;
-//             break;
-//         default:
-//             printf("seek_buffer incorrect whence:%d\n", whence);
-//             return -1;
-//             break;
-//     }
-//     int final_pos = start_pos + offset;
-//     if (final_pos < 0) 
-//     {
-//         //final_ptr = opaque;
-//         printf("final_pos=%d\n", final_pos);
-//         return -1;
-//     }
-//     if (final_pos > image_size)
-//     {
-//         //final_ptr = image_end;
-//         printf("final_pos > size\n");
-//         return -1;
-//     }
-//     image_internal_position = final_pos;
-//     return 0;
-// }
+int64_t seek_buffer(void *opaque, int64_t offset, int whence)
+{
+    int64_t start_pos = 0;
+    switch (whence)
+    {
+    case SEEK_SET:
+        start_pos = 0;
+        break;
+    case SEEK_CUR:
+        start_pos = avi_image_context.internal_position;
+        break;
+    case SEEK_END:
+        start_pos = avi_image_context.size;
+        break;
+    case AVSEEK_SIZE:
+        return avi_image_context.size;
+        break;
+    default:
+        // printf("seek_buffer incorrect whence:%d\n", whence);
+        return -1;
+        break;
+    }
+    int64_t final_pos = start_pos + offset;
+    if (final_pos < 0)
+    {
+        // final_ptr = opaque;
+        return -1;
+    }
+    if (final_pos > avi_image_context.size)
+    {
+        // final_ptr = image_end;
+        return -1;
+    }
+    avi_image_context.internal_position = final_pos;
+    return 0;
+}
+
 static AVFrame *avi_alloc_picture(enum AVPixelFormat pix_fmt, int width, int height)
 {
     AVFrame *picture;
@@ -133,34 +159,24 @@ static AVFrame *avi_alloc_picture(enum AVPixelFormat pix_fmt, int width, int hei
     if (!picture)
         return NULL;
     picture->format = pix_fmt;
-    picture->width  = width;
+    picture->width = width;
     picture->height = height;
     /* allocate the buffers for the frame data */
     ret = av_frame_get_buffer(picture, 0);
-    if (ret < 0) {
-        printf("Cannot allocate buffers for picture!\n");
+    if (ret < 0)
+    {
+        //printf("Cannot allocate buffers for picture!\n");
         return NULL;
     }
     return picture;
 }
 
-void change_pixel_format(AVFrame *pFrame)
+int fill_rgb_frame(AVFrame *pFrame)
 {
-    AVFrame * resFrame = avi_alloc_picture(AV_PIX_FMT_RGB24, pFrame->width, pFrame->height);
-    struct SwsContext * ctx = sws_getContext(pFrame->width,
-                                      pFrame->height,
-                                      AV_PIX_FMT_YUV420P,
-                                      pFrame->width,
-                                      pFrame->height,
-                                      AV_PIX_FMT_RGB24,
-                                      0, 0, 0, 0);
-    sws_scale(ctx, (const uint8_t *const *) pFrame->data, pFrame->linesize, 0,
-              pFrame->height, resFrame->data, resFrame->linesize);
-    sws_freeContext(ctx);
-    printf("pixel format changed successfully!\n");
-    av_frame_free(&resFrame);
+    int ret = sws_scale(avi_image_context.sws_ctx, (const uint8_t *const *)pFrame->data, pFrame->linesize, 0,
+                  pFrame->height, avi_image_context.rgbFrame->data, avi_image_context.rgbFrame->linesize);
+    return ret < 0 ? ret : 0;
 }
-
 
 /**
  * Probe AVI image
@@ -168,163 +184,225 @@ void change_pixel_format(AVFrame *pFrame)
  * @v image		AVI image
  * @ret rc		Return status code
  */
-static int avi_image_probe ( struct image *image ) {
+static int avi_image_probe(struct image *image)
+{
     int ret = 0;
-    image_size = image->len;
-    image_internal_position = 0;
-    image_start = image->data;
+    av_log_set_level(AV_LOG_ERROR); //TRACE, DEBUG, VERBOSE, INFO, WARNING, ERROR, FATAL, PANIC, QUIET
+    avi_image_context_clear();
+    avi_image_context.size = image->len;
+    avi_image_context.internal_position = 0;
+    avi_image_context.start_ptr = image->data;
     AVFormatContext *pFormatContext = avformat_alloc_context();
     if (!pFormatContext)
     {
-        printf("ERROR! Can't allocate AVFormatContext\n");
-        return -1;
+       // printf("ERROR! Can't allocate AVFormatContext\n");
+        goto error_alloc_format_ctx;
     }
-    //setup pb field with custom io stream.
+    // setup pb field with custom io stream.
     const int avio_buffer_size = 8192 /* + 64 */;
-    unsigned char* avio_buffer = (unsigned char*)av_malloc(avio_buffer_size);
-    AVIOContext * avio = avio_alloc_context(avio_buffer, avio_buffer_size, 0, NULL, read_buffer, NULL, NULL);
+    unsigned char *avio_buffer = (unsigned char *)av_malloc(avio_buffer_size);
+    AVIOContext *avio = avio_alloc_context(avio_buffer, avio_buffer_size, 0, NULL, read_buffer, NULL, seek_buffer);
     pFormatContext->pb = avio;
-    //pFormatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
-    if (!pFormatContext->pb) {
-        printf("ERROR! Can't allocate AVIOContext\n");
-        return -1;
-    }
-    if ((ret = avformat_open_input(&pFormatContext, NULL, NULL, NULL)) != 0) {
-        printf("ERROR! Can't open file with avformat_open_input(). Error code: %d\n", ret);
-        return -1;
-    }
-    //printf("internal_position=%d\n", image_internal_position);
-    if (avformat_find_stream_info(pFormatContext, NULL) < 0) {
-        printf("ERROR! Can't get the stream info");
-        return -1;
-    }
-    //printf("internal_position=%d\n", image_internal_position);
-    // Initialize the codec paramters for subsequent usage. 
-    AVCodec* pCodec = NULL;
-    AVCodecParameters* pCodecParameters = NULL;
-    int videoStreamIndex = -1;
-
-for (int i = 0; i < pFormatContext->nb_streams; i++)
+    // pFormatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
+    if (!pFormatContext->pb)
     {
-//        AVCodecParameters *pLocalCodecParameters = NULL;
-        // Read the codec parameters corresponding to each stream.
-        AVCodecParameters * pLocalCodecParameters = pFormatContext->streams[i]->codecpar;
+        //printf("ERROR! Can't allocate AVIOContext\n");
+        goto error_alloc_avio_ctx;
+    }
+    if ((ret = avformat_open_input(&pFormatContext, NULL, NULL, NULL)) != 0)
+    {
+        printf("ERROR! Can't open file with avformat_open_input(). Error code: %d\n", ret);
+        goto error_open_input;
+    }
+    // printf("internal_position=%d\n", image_internal_position);
+    if (avformat_find_stream_info(pFormatContext, NULL) < 0)
+    {
+        printf("ERROR! Can't get the stream info\n");
+        goto error_find_stream_info;
+    }
+    // printf("internal_position=%d\n", image_internal_position);
+    //  Initialize the codec paramters for subsequent usage.
+    AVCodec *pCodec = NULL;
+    AVCodecParameters *pCodecParameters = NULL;
 
-        //const AVCodec *pLocalCodec = avcodec_find_decoder(pLocalCodecParameters->codec_id);
-    //    if (!avcodec_find_decoder(pLocalCodecParameters->codec_id))
-    //    {
-    //        printf("Error! Can't find codec for %s, %s\n",
-    //               av_get_media_type_string(pLocalCodecParameters->codec_type),
-    //               avcodec_get_name(pLocalCodecParameters->codec_id));
-    //        //return -1;
-    //    }
+    for (int i = 0; i < pFormatContext->nb_streams; i++)
+    {
+        AVCodecParameters *pLocalCodecParameters = pFormatContext->streams[i]->codecpar;
         if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_VIDEO)
         {
-            if (videoStreamIndex == -1)
+            if (avi_image_context.video_stream_index == -1)
             {
-                videoStreamIndex = i;
+                avi_image_context.video_stream_index = i;
                 pCodec = avcodec_find_decoder(pLocalCodecParameters->codec_id);
                 if (!pCodec)
                 {
                     printf("Error! Can't find codec for %s, %s\n",
                            av_get_media_type_string(pLocalCodecParameters->codec_type),
                            avcodec_get_name(pLocalCodecParameters->codec_id));
-                    return -1;
+                    goto error_find_decoder;
                 }
-//                codec_type = av_get_media_type_string(pLocalCodecParameters->codec_type);
-//                codec_name = avcodec_get_name(pLocalCodecParameters->codec_id);
                 pCodecParameters = pLocalCodecParameters;
+                avi_image_context.framerate = (double)pFormatContext->streams[i]->r_frame_rate.num / (double)pFormatContext->streams[i]->r_frame_rate.den;
             }
         }
     }
+    if (avi_image_context.video_stream_index == -1)
+    {
+        printf("Error! Video stream not found!\n");
+        goto error_video_not_found;
+    }
 
-    AVCodecContext* pCodecContext = avcodec_alloc_context3(pCodec);
+    AVCodecContext *pCodecContext = avcodec_alloc_context3(pCodec);
     if (pCodecContext == NULL)
     {
-        printf("ERROR! Cannot allocate memory for pCodecContext");
-        return -1;
+        //printf("ERROR! Cannot allocate memory for pCodecContext\n");
+        goto error_codec_ctx;
     }
 
     if (avcodec_parameters_to_context(pCodecContext, pCodecParameters) < 0)
     {
-        printf("ERROR! failed to copy codec params to codec context\n");
-        return -1;
+        //printf("ERROR! failed to copy codec params to codec context\n");
+        goto error_parameters_to_codec_ctx;
     }
 
     if (avcodec_open2(pCodecContext, pCodec, NULL) < 0)
     {
         printf("failed to open codec through avcodec_open2\n");
-        return -1;
+        goto error_open_codec;
     }
-    AVFrame* pFrame = av_frame_alloc();
-    if (!pFrame)
+    avi_image_context.pixbuf = alloc_pixbuf(pCodecContext->width, pCodecContext->height);
+    if (!avi_image_context.pixbuf)
     {
-        printf("failed to allocate memory for AVFrame\n");
-        return -1;
+        //printf("failed to alloc memory for pixbuf\n");
+        goto error_pixbuf_alloc;
     }
+    avi_image_context.rgbFrame = avi_alloc_picture(AV_PIX_FMT_0RGB32, pCodecContext->width, pCodecContext->height);
+    if (!avi_image_context.rgbFrame)
+    {
+        //printf("failed to alloc memory for rgbFrame\n");
+        goto error_rgbframe_alloc;
+    }
+    avi_image_context.pFrame = av_frame_alloc();
+    if (!avi_image_context.pFrame)
+    {
+        //printf("failed to allocate memory for pFrame\n");
+        goto error_pframe_alloc;
+    }
+    avi_image_context.pPacket = av_packet_alloc();
+    if (!avi_image_context.pPacket)
+    {
+        //printf("failed to allocate memory for pPacket\n");
+        goto error_packet_alloc;
+    }
+    avi_image_context.sws_ctx = sws_getContext(pCodecContext->width, pCodecContext->height, pCodecContext->pix_fmt, pCodecContext->width, pCodecContext->height,
+                                            AV_PIX_FMT_0RGB32, 0, 0, 0, 0);
+    if (!avi_image_context.sws_ctx)
+    {
+        //printf("Failed to allocate memory for sws_ctx!\n");
+        goto error_sws_alloc;
+    }
+    // here ends the avi probe!
+    avi_image_context.pFormatContext = pFormatContext;
+    avi_image_context.pCodecContext = pCodecContext;
+    return 0;
 
-    AVPacket* pPacket = av_packet_alloc();
-    if (!pPacket)
-    {
-        printf("failed to allocate memory for AVPacket\n");
-        return -1;
-    }
-    int indexOfFrame = 0;
-    while (av_read_frame(pFormatContext, pPacket) >= 0)
+error_sws_alloc:
+error_packet_alloc:
+error_pframe_alloc:
+error_rgbframe_alloc:
+    pixbuf_put(avi_image_context.pixbuf);
+error_pixbuf_alloc:
+error_open_codec:
+error_parameters_to_codec_ctx:
+    avcodec_free_context(&pCodecContext);
+error_codec_ctx:
+error_video_not_found:
+error_find_decoder:
+error_find_stream_info:
+error_open_input:
+    avio_context_free(&pFormatContext->pb);
+error_alloc_avio_ctx:
+    avformat_close_input(&pFormatContext);
+error_alloc_format_ctx:
+    avi_image_context_clear();
+    return -1;
+}
+
+/**
+ * Convert AVI frame to pixel buffer
+ *
+ * @v image		AVI image
+ * @v pixbuf		Pixel buffer to fill in
+ * @ret rc		Return status code
+ */
+static int avi_pixbuf(struct image *image, struct pixel_buffer **pixbuf)
+{
+    int response = 0;
+start:
+    while ((response = av_read_frame(avi_image_context.pFormatContext, avi_image_context.pPacket)) >= 0)
     {
         // if it's the video stream
-        if (pPacket->stream_index == videoStreamIndex) {
-            int response = avcodec_send_packet(pCodecContext, pPacket);
-            // if (response < 0)
-            // {
-            //     //printf("avi 244, response=%d\n", response);
-            //     break;
-            // }
-            // else
-            // {
-                while (response >= 0)
-                {
-                response = avcodec_receive_frame(pCodecContext, pFrame);
-                //printf("avi 240, response=%d\n", response);
+        if (avi_image_context.pPacket->stream_index == avi_image_context.video_stream_index)
+        {
+            response = avcodec_send_packet(avi_image_context.pCodecContext, avi_image_context.pPacket);
+            if (response < 0)
+            {
+                break;
+                goto error_pix_fmt;
+            }
+            else
+            {
+                response = avcodec_receive_frame(avi_image_context.pCodecContext, avi_image_context.pFrame);
                 if (response >= 0)
                 {
-                    indexOfFrame++;
-                    //SaveToJPEG(pFrame, argv[2], indexOfFrame);
-                    //printf("data %p, type = %d, quality=%d\n", pFrame->data, pFrame->pict_type, pFrame->quality);
-                    change_pixel_format(pFrame);
+                    // if (fill_rgb_frame(avi_image_context.pFrame) < 0)
+                    // {
+                    //     break;
+                    //     goto error_pix_fmt;
+                    // }
+                    fill_rgb_frame(avi_image_context.pFrame);
+                    copy_to_user(avi_image_context.pixbuf->data, 0, avi_image_context.rgbFrame->data[0],
+                                 4 * avi_image_context.rgbFrame->width * avi_image_context.rgbFrame->height);
+                    //*pixbuf = avi_image_context.pixbuf;
+                    *pixbuf = pixbuf_get(avi_image_context.pixbuf);
+                    av_frame_unref(avi_image_context.pFrame);
+                    //av_frame_unref(avi_image_context.rgbFrame); //????? realloc buffers later?
+                    break;
                 }
             }
         }
-        av_packet_unref(pPacket);
-        //Limit the number of output frame to be 5.
-        if (indexOfFrame == 5)
-        {
-            break;
-        }
-
+        av_packet_unref(avi_image_context.pPacket);
     }
-    avio_context_free(&pFormatContext->pb);
-    avformat_close_input(&pFormatContext);
-    av_frame_free(&pFrame);
-    av_packet_free(&pPacket);
-    avcodec_free_context(&pCodecContext);
-	return 0;
+    if (response == AVERROR_EOF) // EOF was reached, need to go to start of video
+    {
+        // avio_seek(avi_image_context.pFormatContext->pb, 0, SEEK_SET);
+        if (avformat_seek_file(avi_image_context.pFormatContext, avi_image_context.video_stream_index, 0, 0,
+                               avi_image_context.pFormatContext->streams[avi_image_context.video_stream_index]->duration, 0) >= 0)
+        {
+            goto start;
+        }
+    }
+    return response < 0 ? response : 0;
+
+error_pix_fmt:
+    av_frame_unref(avi_image_context.pFrame);
+    //av_frame_unref(avi_image_context.rgbFrame);  //????? realloc buffers later?
+    av_packet_unref(avi_image_context.pPacket);
+    return -1;
 }
 
+int avi_get_next_frame(struct pixel_buffer **pixbuf)
+{
+    return avi_pixbuf(NULL, pixbuf);
+}
+
+double avi_get_framerate(void)
+{
+    return avi_image_context.framerate;
+}
 /** AVI image type */
-struct image_type avi_image_type __image_type ( PROBE_NORMAL ) = {
-	.name = "AVI",
-	.probe = avi_image_probe,
-	// .pixbuf = avi_pixbuf,
+struct image_type avi_image_type __image_type(PROBE_NORMAL) = {
+    .name = "AVI",
+    .probe = avi_image_probe,
+    .pixbuf = avi_pixbuf,
 };
-
-// //Write File
-// int write_buffer(void *opaque, uint8_t *buf, int buf_size){
-// 	if(!feof(fp_write)){
-// 		int true_size=fwrite(buf,1,buf_size,fp_write);
-// 		return true_size;
-// 	}else{
-// 		return -1;
-// 	}
-// }
-

@@ -334,7 +334,6 @@ int ff_mpv_frame_start(MpegEncContext *s, AVCodecContext *avctx)
     pic->f->coded_picture_number = s->coded_picture_number++;
 
     if (alloc_picture(s, pic) < 0) {
-        printf("mpegvideo_dec 337\n");
         return -1;
     }
 
@@ -357,7 +356,6 @@ int ff_mpv_frame_start(MpegEncContext *s, AVCodecContext *avctx)
     if ((ret = ff_mpeg_ref_picture(s->avctx, &s->current_picture,
                                    s->current_picture_ptr)) < 0)
                                    {
-        printf("mpegvideo_dec 360, ret=%d\n", ret);
         return ret;
                                    }
 
@@ -398,7 +396,6 @@ int ff_mpv_frame_start(MpegEncContext *s, AVCodecContext *avctx)
         s->last_picture_ptr->f->pict_type = AV_PICTURE_TYPE_P;
 
         if (alloc_picture(s, s->last_picture_ptr) < 0) {
-            printf("mpegvideo_dec 401\n");
             s->last_picture_ptr = NULL;
             return -1;
         }

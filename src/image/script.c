@@ -366,8 +366,10 @@ struct prompt_options {
 	unsigned int key;
 	/** Timeout */
 	unsigned long timeout;
-	/** Variable for store pressed key */
+	/** Variable to store pressed key */
 	char *variable;
+	/*url of AVI video*/
+	char *video;
 };
 
 /** "prompt" option list */
@@ -376,8 +378,10 @@ static struct option_descriptor prompt_opts[] = {
 		      struct prompt_options, key, parse_key ),
 	OPTION_DESC ( "timeout", 't', required_argument,
 		      struct prompt_options, timeout, parse_timeout ),
-	OPTION_DESC ( "variable", 'v', required_argument,
+	OPTION_DESC ( "variable", 'var', required_argument,
 		      struct prompt_options, variable, parse_string ),
+	OPTION_DESC ( "video", 'vid', required_argument,
+		      struct prompt_options, video, parse_string ),
 };
 
 /** "prompt" command descriptor */
@@ -409,7 +413,7 @@ static int prompt_exec ( int argc, char **argv ) {
 	}
 
 	/* Display prompt and wait for key */
-	if ( ( rc = prompt ( text, opts.timeout, opts.key, opts.variable ) ) != 0 )
+	if ( ( rc = prompt ( text, opts.timeout, opts.key, opts.variable, opts.video ) ) != 0 )
 		goto err_prompt;
 
 	/* Free prompt text */

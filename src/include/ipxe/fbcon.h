@@ -156,5 +156,6 @@ extern int fbcon_init ( struct fbcon *fbcon, userptr_t start,
 			struct console_configuration *config );
 extern void fbcon_fini ( struct fbcon *fbcon );
 extern void fbcon_putchar ( struct fbcon *fbcon, int character );
+extern int fbcon_update_pixbuf(struct fbcon *fbcon, struct pixel_buffer * pixbuf);
 
 #endif /* _IPXE_FBCON_H */

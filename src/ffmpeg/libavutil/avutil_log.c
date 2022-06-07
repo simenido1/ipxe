@@ -53,7 +53,7 @@
 #define BACKTRACE_LOGLEVEL AV_LOG_ERROR
 #endif
 
-static int av_log_level = AV_LOG_INFO;
+static int av_log_level = AV_LOG_ERROR;
 static int flags;
 
 #define NB_LEVELS 8

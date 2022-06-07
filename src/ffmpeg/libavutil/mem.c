@@ -142,13 +142,12 @@ void *av_malloc(size_t size)
      */
 #else
     ptr = malloc(size);
-    malloc_count++;
-    malloc_size += size;
-    //printf("mem 143, ptr=%p\n", ptr);
-    if (!ptr)
-    {
-        printf("malloc fault! malloc_count=%d, malloc_size=%d\n", malloc_count, malloc_size);
-    }
+    // malloc_count++;
+    // malloc_size += size;
+    // if (!ptr)
+    // {
+    //     printf("malloc fault! malloc_count=%d, malloc_size=%d\n", malloc_count, malloc_size);
+    // }
 #endif
     if(!ptr && !size) {
         size = 1;
