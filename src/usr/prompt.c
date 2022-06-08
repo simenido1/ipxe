@@ -79,7 +79,7 @@ int prompt(const char *text, unsigned long timeout, int key, const char *variabl
 		unsigned long start = currticks();
 		int ret = 0;
 		int indexOfFrame = 0;
-		while (((timeout == 0) || (currticks() - start) < timeout) && key_pressed < 0 && ret >= 0)
+		while (((timeout == 0) || (currticks() - start) < timeout) && key_pressed < 0 /* && ret >= 0 */)
 		{
 			if ((ret = avi_get_next_frame(&pixbuf)) != 0)
 			{
