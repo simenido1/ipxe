@@ -54,7 +54,7 @@ FILE_LICENCE(GPL2_OR_LATER_OR_UBDL);
 extern int vesafb_update_pixbuf(struct pixel_buffer *pixbuf); //function to update background image with new frame (pcbios)
 extern int efifb_update_pixbuf(struct pixel_buffer * pixbuf); //function to update background image with new frame (efi)
 
-#define EFI //(define here EFI or PCBIOS)
+#define EFI //(define here EFI or PCBIOS or nothing)
 int update_console_framebuffer(struct pixel_buffer * pb)
 {
 	#ifdef PCBIOS
@@ -63,6 +63,7 @@ int update_console_framebuffer(struct pixel_buffer * pb)
 	#ifdef EFI
 	return efifb_update_pixbuf(pb);
 	#endif
+	return 1;
 }
 int prompt(const char *text, unsigned long timeout, int key, const char *variable, const char *video)
 {
@@ -101,7 +102,7 @@ int prompt(const char *text, unsigned long timeout, int key, const char *variabl
 				indexOfFrame++;
 				if ((ret = update_console_framebuffer(pixbuf)) != 0)
 				{
-					printf("vesafb_update_pixbuf error!, frame=%d\n", indexOfFrame);
+					printf("update_console_framebuffer error!, frame=%d\n", indexOfFrame);
 				}
 			}
 			pixbuf_put(pixbuf);
