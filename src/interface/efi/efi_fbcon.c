@@ -674,6 +674,11 @@ int efifb_update_pixbuf(struct pixel_buffer * pixbuf)
 	return ret;
 }
 
+void efifb_finish(void)
+{
+	efifb_fini();
+}
+
 /** EFI graphics output protocol console driver */
 struct console_driver efifb_console __console_driver = {
 	.usage = CONSOLE_EFIFB,

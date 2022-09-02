@@ -53,6 +53,7 @@ FILE_LICENCE(GPL2_OR_LATER_OR_UBDL);
  */
 extern int vesafb_update_pixbuf(struct pixel_buffer *pixbuf); //function to update background image with new frame (pcbios)
 extern int efifb_update_pixbuf(struct pixel_buffer * pixbuf); //function to update background image with new frame (efi)
+extern void efifb_finish(void);
 
 #define EFI //(define here EFI or PCBIOS or nothing)
 int update_console_framebuffer(struct pixel_buffer * pb)
@@ -110,6 +111,9 @@ int prompt(const char *text, unsigned long timeout, int key, const char *variabl
 			// usleep(1000000 / framerate);
 			key_pressed = getkey(1000 / framerate);
 		}
+	#ifdef EFI
+	efifb_finish();
+	#endif
 	unregister_image(find_image(video));
 	}
 	else
