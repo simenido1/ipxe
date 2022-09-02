@@ -20,8 +20,8 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <math.h>
-
+//#include <math.h>
+#include <fdlibm/fdlibm.h>
 #include "display.h"
 #include "libm.h"
 #include "mathematics.h"

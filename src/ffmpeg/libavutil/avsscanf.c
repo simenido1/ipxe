@@ -23,7 +23,8 @@
 
 #include <errno.h>
 #include <limits.h>
-#include <math.h>
+//#include <math.h>
+#include <fdlibm/fdlibm.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>

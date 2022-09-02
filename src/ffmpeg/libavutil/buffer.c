@@ -132,7 +132,9 @@ static void buffer_replace(AVBufferRef **dst, AVBufferRef **src)
     } else
         av_freep(dst);
 
-    if (atomic_fetch_sub_explicit(&b->refcount, 1, memory_order_acq_rel) == 1) {
+    // if (atomic_fetch_sub_explicit(&b->refcount, 1, memory_order_acq_rel) == 1) {
+        b->refcount -= 1;
+        if (b->refcount == 0) {
         /* b->free below might already free the structure containing *b,
          * so we have to read the flag now to avoid use-after-free. */
         int free_avbuffer = !(b->flags_internal & BUFFER_FLAG_NO_FREE);
@@ -338,8 +340,11 @@ void av_buffer_pool_uninit(AVBufferPool **ppool)
     buffer_pool_flush(pool);
     ff_mutex_unlock(&pool->mutex);
 
-    if (atomic_fetch_sub_explicit(&pool->refcount, 1, memory_order_acq_rel) == 1)
+    // if (atomic_fetch_sub_explicit(&pool->refcount, 1, memory_order_acq_rel) == 1)
+    pool->refcount -= 1;
+    if (pool->refcount == 0) {
         buffer_pool_free(pool);
+    }
 }
 
 static void pool_release_buffer(void *opaque, uint8_t *data)
@@ -355,8 +360,11 @@ static void pool_release_buffer(void *opaque, uint8_t *data)
     pool->pool = buf;
     ff_mutex_unlock(&pool->mutex);
 
-    if (atomic_fetch_sub_explicit(&pool->refcount, 1, memory_order_acq_rel) == 1)
+    // if (atomic_fetch_sub_explicit(&pool->refcount, 1, memory_order_acq_rel) == 1)
+    pool->refcount -= 1;
+    if (pool->refcount == 0) {
         buffer_pool_free(pool);
+    }
 }
 
 /* allocate a new buffer and override its free() callback so that

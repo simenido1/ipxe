@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2022 Georgii Simenido <simenido1@gmail.com>.
  *
  * This program is free software; you can redistribute it and/or

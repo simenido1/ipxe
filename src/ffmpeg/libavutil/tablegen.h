@@ -24,8 +24,8 @@
 #ifndef AVUTIL_TABLEGEN_H
 #define AVUTIL_TABLEGEN_H
 
-#include <math.h>
-
+//#include <math.h>
+#include <fdlibm/fdlibm.h>
 // we lack some functions on all host platforms, and we don't care about
 // performance and/or strict ISO C semantics as it's performed at build time
 static inline double ff_cbrt(double x)

@@ -30,7 +30,7 @@
 #include <windows.h>
 #include <bcrypt.h>
 #endif
-#include <fcntl.h>
+//#include <fcntl.h>
 //#include <math.h>
 #include <time.h>
 #include <string.h>

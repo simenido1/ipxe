@@ -104,7 +104,7 @@ size_t maxusedmem;
  *
  * Currently fixed at 50MB.
  */
-#define HEAP_SIZE ( 50* 1024 * 1024 )
+#define HEAP_SIZE ( 50 * 1024 * 1024 )
 
 /** The heap itself */
 static char heap[HEAP_SIZE] __attribute__ (( aligned ( __alignof__(void *) )));

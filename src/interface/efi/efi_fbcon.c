@@ -667,6 +667,13 @@ static int efifb_configure ( struct console_configuration *config ) {
 	return 0;
 }
 
+int efifb_update_pixbuf(struct pixel_buffer * pixbuf)
+{
+	int ret = fbcon_update_pixbuf(&efifb.fbcon, pixbuf);
+	fbcon_fini(&efifb.fbcon);
+	return ret;
+}
+
 /** EFI graphics output protocol console driver */
 struct console_driver efifb_console __console_driver = {
 	.usage = CONSOLE_EFIFB,

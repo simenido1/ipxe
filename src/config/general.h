@@ -55,7 +55,7 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 
 #define	DOWNLOAD_PROTO_TFTP	/* Trivial File Transfer Protocol */
 #define	DOWNLOAD_PROTO_HTTP	/* Hypertext Transfer Protocol */
-#define	DOWNLOAD_PROTO_HTTPS	/* Secure Hypertext Transfer Protocol */
+#undef	DOWNLOAD_PROTO_HTTPS	/* Secure Hypertext Transfer Protocol */
 #undef	DOWNLOAD_PROTO_FTP	/* File Transfer Protocol */
 #undef	DOWNLOAD_PROTO_SLAM	/* Scalable Local Area Multicast */
 #undef	DOWNLOAD_PROTO_NFS	/* Network File System Protocol */
@@ -105,10 +105,10 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
  *
  */
 //#define	IMAGE_NBI		/* NBI image support */
-#define	IMAGE_ELF		/* ELF image support */
+//#define	IMAGE_ELF		/* ELF image support */
 //#define	IMAGE_MULTIBOOT		/* MultiBoot image support */
 //#define	IMAGE_PXE		/* PXE image support */
-#define	IMAGE_SCRIPT		/* iPXE script image support */
+//#define	IMAGE_SCRIPT		/* iPXE script image support */
 //#define	IMAGE_BZIMAGE		/* Linux bzImage image support */
 //#define	IMAGE_COMBOOT		/* SYSLINUX COMBOOT image support */
 //#define	IMAGE_EFI		/* EFI image support */
@@ -196,9 +196,8 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 				 * e.g "test-foo" */
 #undef	NULL_TRAP		/* Attempt to catch NULL function calls */
 #undef	GDBSERIAL		/* Remote GDB debugging over serial */
-/*#undef	GDBUDP			 Remote GDB debugging over UDP
+#undef	GDBUDP			/* Remote GDB debugging over UDP
 				 * (both may be set) */
-#define GDBUDP
 //#define EFI_DOWNGRADE_UX	/* Downgrade UEFI user experience */
 #define	TIVOLI_VMM_WORKAROUND	/* Work around the Tivoli VMM's garbling of SSE
 				 * registers when iPXE traps to it due to

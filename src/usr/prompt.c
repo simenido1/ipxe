@@ -28,7 +28,6 @@ FILE_LICENCE(GPL2_OR_LATER_OR_UBDL);
  * Prompt for keypress
  *
  */
-
 #include <errno.h>
 #include <stdio.h>
 #include <ipxe/console.h>
@@ -52,7 +51,19 @@ FILE_LICENCE(GPL2_OR_LATER_OR_UBDL);
  * Returns success if the specified key was pressed within the
  * specified timeout period.
  */
-extern int vesafb_update_pixbuf(struct pixel_buffer *pixbuf); // function to update background image with new frame
+extern int vesafb_update_pixbuf(struct pixel_buffer *pixbuf); //function to update background image with new frame (pcbios)
+extern int efifb_update_pixbuf(struct pixel_buffer * pixbuf); //function to update background image with new frame (efi)
+
+#define EFI //(define here EFI or PCBIOS)
+int update_console_framebuffer(struct pixel_buffer * pb)
+{
+	#ifdef PCBIOS
+	return vesafb_update_pixbuf(pb);
+	#endif
+	#ifdef EFI
+	return efifb_update_pixbuf(pb);
+	#endif
+}
 int prompt(const char *text, unsigned long timeout, int key, const char *variable, const char *video)
 {
 	int key_pressed = -1;
@@ -88,7 +99,7 @@ int prompt(const char *text, unsigned long timeout, int key, const char *variabl
 			else
 			{
 				indexOfFrame++;
-				if ((ret = vesafb_update_pixbuf(pixbuf)) != 0)
+				if ((ret = update_console_framebuffer(pixbuf)) != 0)
 				{
 					printf("vesafb_update_pixbuf error!, frame=%d\n", indexOfFrame);
 				}

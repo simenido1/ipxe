@@ -12,8 +12,6 @@ MAKEDEPS	:= Makefile
 CROSS_COMPILE	?= $(CROSS)
 SYMBOL_PREFIX	:=
 
-# %.h:
-# 	@:
 ###############################################################################
 #
 # Locations of tools

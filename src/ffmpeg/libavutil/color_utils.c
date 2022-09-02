@@ -19,7 +19,8 @@
  */
 
 #include <stddef.h>
-#include <math.h>
+//#include <math.h>
+#include <fdlibm/fdlibm.h>
 
 #include "libavutil/color_utils.h"
 #include "libavutil/pixfmt.h"

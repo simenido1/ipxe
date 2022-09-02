@@ -20,7 +20,8 @@
 
 #include <inttypes.h>
 #include <string.h>
-#include <math.h>
+//#include <math.h>
+#include <fdlibm/fdlibm.h>
 #include <stdio.h>
 #include "ffmpeg_config.h"
 #include "swscale.h"

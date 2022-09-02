@@ -81,7 +81,8 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
           : __bswap_variable_64 (value) )
 #define bswap_64( value ) __bswap_64 (value)
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+// #if __BYTE_ORDER == __LITTLE_ENDIAN
+#if 1
 #define __cpu_to_leNN( bits, value ) (value)
 #define __cpu_to_beNN( bits, value ) __bswap_ ## bits (value)
 #define __leNN_to_cpu( bits, value ) (value)
@@ -92,7 +93,8 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 #define __beNN_to_cpus( bits, ptr ) __bswap_ ## bits ## s (ptr)
 #endif
 
-#if __BYTE_ORDER == __BIG_ENDIAN
+// #if __BYTE_ORDER == __BIG_ENDIAN
+#if 0
 #define __cpu_to_leNN( bits, value ) __bswap_ ## bits (value)
 #define __cpu_to_beNN( bits, value ) (value)
 #define __leNN_to_cpu( bits, value ) __bswap_ ## bits (value)

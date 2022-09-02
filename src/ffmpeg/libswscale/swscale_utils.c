@@ -24,7 +24,8 @@
 #define _SVID_SOURCE // needed for MAP_ANONYMOUS
 #define _DARWIN_C_SOURCE // needed for MAP_ANON
 #include <inttypes.h>
-#include <math.h>
+//#include <math.h>
+#include <fdlibm/fdlibm.h>
 #include <stdio.h>
 #include <string.h>
 #if HAVE_MMAP

@@ -6,6 +6,6 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    command: /bin/bash -c "make bin/ipxe.iso"
+    command: /bin/bash -c "make bin-x86_64-efi/snponly.efi"
     volumes:
       - ./src:/usr/src/ipxe

@@ -12,6 +12,8 @@
 
 /* Sometimes it's necessary to define __LITTLE_ENDIAN explicitly
    but these catch some common cases. */
+#ifndef FDLIBM_H
+#define FDLIBM_H
 #include <sys/cdefs.h>
 
 #if defined(i386) || defined(i486) || \
@@ -19,8 +21,9 @@
 	defined(__alpha) || defined(__osf__)
 #define __LITTLE_ENDIAN
 #endif
-#define __LITTLE_ENDIAN
-#ifdef __LITTLE_ENDIAN
+// #define __LITTLE_ENDIAN
+// #ifdef __LITTLE_ENDIAN
+#if 1
 #define __HI(x) *(1+(int*)&x)
 #define __LO(x) *(int*)&x
 #define __HIp(x) *(1+(int*)x)
@@ -225,3 +228,4 @@ extern double __kernel_sin __P((double,double,int));
 extern double __kernel_cos __P((double,double));
 extern double __kernel_tan __P((double,double,int));
 extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int,const int*));
+#endif

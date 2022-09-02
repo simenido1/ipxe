@@ -18,7 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <math.h>
+//#include <math.h>
+#include <fdlibm/fdlibm.h>
 #include <stdint.h>
 #include <stdio.h>
 

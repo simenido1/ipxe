@@ -27,7 +27,8 @@
 #ifndef AVCODEC_AC3_H
 #define AVCODEC_AC3_H
 
-#include <math.h>
+// #include <math.h>
+#include <fdlibm/fdlibm.h>
 #include <stdint.h>
 
 #define EAC3_MAX_CHANNELS 16          /**< maximum number of channels in EAC3 */
