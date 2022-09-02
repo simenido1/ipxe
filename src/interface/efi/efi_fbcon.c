@@ -670,7 +670,8 @@ static int efifb_configure ( struct console_configuration *config ) {
 int efifb_update_pixbuf(struct pixel_buffer * pixbuf)
 {
 	int ret = fbcon_update_pixbuf(&efifb.fbcon, pixbuf);
-	fbcon_fini(&efifb.fbcon);
+	//fbcon_fini(&efifb.fbcon);
+	efifb_fini();
 	return ret;
 }
 

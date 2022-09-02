@@ -65,6 +65,7 @@ int update_console_framebuffer(struct pixel_buffer * pb)
 	#endif
 	return 1;
 }
+
 int prompt(const char *text, unsigned long timeout, int key, const char *variable, const char *video)
 {
 	int key_pressed = -1;
@@ -109,6 +110,7 @@ int prompt(const char *text, unsigned long timeout, int key, const char *variabl
 			// usleep(1000000 / framerate);
 			key_pressed = getkey(1000 / framerate);
 		}
+	unregister_image(find_image(video));
 	}
 	else
 	{
