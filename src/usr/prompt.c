@@ -74,11 +74,13 @@ int prompt(const char *text, unsigned long timeout, int key, const char *variabl
 	if (video)
 	{
 		char *command;
-		struct pixel_buffer *pixbuf;
+
 		asprintf(&command, "console --picture=%s --keep", video);
 		if (system(command) != 0)
 		{
-			goto video_error;
+            free(command);
+            unregister_image(find_image(video));
+            goto video_error;
 		}
 		free(command);
 
@@ -93,7 +95,8 @@ int prompt(const char *text, unsigned long timeout, int key, const char *variabl
 		unsigned long start = currticks();
 		int ret = 0;
 		int indexOfFrame = 0;
-		while (((timeout == 0) || (currticks() - start) < timeout) && key_pressed < 0 /* && ret >= 0 */)
+        struct pixel_buffer *pixbuf = pixbuf_get(alloc_pixbuf(avi_get_width(), avi_get_height()));
+		while (((timeout == 0) || (currticks() - start) < timeout) && key_pressed < 0  && ret >= 0)
 		{
 			if ((ret = avi_get_next_frame(&pixbuf)) != 0)
 			{
@@ -107,7 +110,7 @@ int prompt(const char *text, unsigned long timeout, int key, const char *variabl
 					printf("update_console_framebuffer error!, frame=%d\n", indexOfFrame);
 				}
 			}
-			pixbuf_put(pixbuf);
+			//pixbuf_put(pixbuf);
 			// usleep(1000000 / framerate);
 			key_pressed = getkey(1000 / framerate);
 		}

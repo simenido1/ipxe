@@ -1,1 +1,1 @@
-CMakeLists.txt not found in C:\projects\ipxe Select CMakeLists.txt
+CMakeLists.txt not found in \\wsl$\Ubuntu\home\simenido\ipxe Select CMakeLists.txt

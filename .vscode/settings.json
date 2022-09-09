@@ -65,7 +65,9 @@
         "ansicol.h": "c",
         "unistd.h": "c",
         "vesafb.h": "c",
-        "fbcon.h": "c"
+        "fbcon.h": "c",
+        "random": "c",
+        "limits": "c"
     },
     "C_Cpp.errorSquiggles": "Enabled",
     "C_Cpp.intelliSenseEngineFallback": "Enabled",

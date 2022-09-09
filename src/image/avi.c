@@ -44,7 +44,7 @@ static struct avi_image_context
     struct SwsContext * sws_ctx;
 } avi_image_context;
 
-static void avi_image_context_clear(void)
+void avi_image_context_clear(void)
 {
     avi_image_context.size = 0;
     avi_image_context.internal_position = 0;
@@ -107,8 +107,8 @@ int read_buffer(void *opaque, uint8_t *buf, int buf_size)
     {
         actual_bytes_read = avi_image_context.size - avi_image_context.internal_position;
     }
-    // memcpy(buf, image_start + image_internal_position, actual_bytes_read);
-    copy_from_user(buf, avi_image_context.start_ptr, avi_image_context.internal_position, actual_bytes_read);
+    memcpy(buf, avi_image_context.start_ptr + avi_image_context.internal_position, actual_bytes_read);
+    //copy_from_user(buf, avi_image_context.start_ptr, avi_image_context.internal_position, actual_bytes_read);
     avi_image_context.internal_position += actual_bytes_read;
     // printf("actual_bytes_read=%d, internal_position=%d, size=%d\n", actual_bytes_read, image_internal_position, image_size);
     return actual_bytes_read;
@@ -171,10 +171,11 @@ static AVFrame *avi_alloc_picture(enum AVPixelFormat pix_fmt, int width, int hei
     return picture;
 }
 
-int fill_rgb_frame(AVFrame *pFrame)
+int fill_rgb_frame(void)
 {
-    int ret = sws_scale(avi_image_context.sws_ctx, (const uint8_t *const *)pFrame->data, pFrame->linesize, 0,
-                  pFrame->height, avi_image_context.rgbFrame->data, avi_image_context.rgbFrame->linesize);
+    int ret = sws_scale(avi_image_context.sws_ctx, (const uint8_t *const *)avi_image_context.pFrame->data,
+                        avi_image_context.pFrame->linesize, 0,avi_image_context.pFrame->height,
+                        avi_image_context.rgbFrame->data, avi_image_context.rgbFrame->linesize);
     return ret < 0 ? ret : 0;
 }
 
@@ -211,7 +212,7 @@ static int avi_image_probe(struct image *image)
     }
     if ((ret = avformat_open_input(&pFormatContext, NULL, NULL, NULL)) != 0)
     {
-        printf("ERROR! Can't open file with avformat_open_input(). Error code: %d\n", ret);
+        //printf("ERROR! Can't open file with avformat_open_input(). Error code: %d\n", ret);
         goto error_open_input;
     }
     // printf("internal_position=%d\n", image_internal_position);
@@ -295,7 +296,7 @@ static int avi_image_probe(struct image *image)
         goto error_packet_alloc;
     }
     avi_image_context.sws_ctx = sws_getContext(pCodecContext->width, pCodecContext->height, pCodecContext->pix_fmt, pCodecContext->width, pCodecContext->height,
-                                            AV_PIX_FMT_0RGB32, 0, 0, 0, 0);
+                                            AV_PIX_FMT_0RGB32, SWS_FAST_BILINEAR, 0, 0, 0);
     if (!avi_image_context.sws_ctx)
     {
         //printf("Failed to allocate memory for sws_ctx!\n");
@@ -320,7 +321,7 @@ error_video_not_found:
 error_find_decoder:
 error_find_stream_info:
 error_open_input:
-    avio_context_free(&pFormatContext->pb);
+    avio_context_free(&avio);
 error_alloc_avio_ctx:
     avformat_close_input(&pFormatContext);
 error_alloc_format_ctx:
@@ -335,6 +336,7 @@ error_alloc_format_ctx:
  * @v pixbuf		Pixel buffer to fill in
  * @ret rc		Return status code
  */
+
 static int avi_pixbuf(struct image *image, struct pixel_buffer **pixbuf)
 {
     int response = 0;
@@ -360,13 +362,15 @@ start:
                     //     break;
                     //     goto error_pix_fmt;
                     // }
-                    fill_rgb_frame(avi_image_context.pFrame);
+                    fill_rgb_frame();
                     copy_to_user(avi_image_context.pixbuf->data, 0, avi_image_context.rgbFrame->data[0],
                                  4 * avi_image_context.rgbFrame->width * avi_image_context.rgbFrame->height);
+                    //*pixbuf = pixbuf_get(*pixbuf);
                     //*pixbuf = avi_image_context.pixbuf;
                     *pixbuf = pixbuf_get(avi_image_context.pixbuf);
-                    av_frame_unref(avi_image_context.pFrame);
+                    //av_frame_unref(avi_image_context.pFrame);
                     //av_frame_unref(avi_image_context.rgbFrame); //????? realloc buffers later?
+                    av_packet_unref(avi_image_context.pPacket);
                     break;
                 }
             }
@@ -391,15 +395,84 @@ error_pix_fmt:
     return -1;
 }
 
-int avi_get_next_frame(struct pixel_buffer **pixbuf)
-{
-    return avi_pixbuf(NULL, pixbuf);
-}
+//int avi_get_next_frame(struct pixel_buffer **pixbuf)
+//{
+//    return avi_pixbuf(NULL, pixbuf);
+//}
 
 double avi_get_framerate(void)
 {
     return avi_image_context.framerate;
 }
+
+int avi_get_width(void)
+{
+    return avi_image_context.pFrame->width;
+}
+
+int avi_get_height(void)
+{
+    return avi_image_context.pFrame->height;
+}
+
+int avi_get_next_frame(struct pixel_buffer **pixbuf)
+{
+    int response = 0;
+    start:
+    while ((response = av_read_frame(avi_image_context.pFormatContext, avi_image_context.pPacket)) >= 0)
+    {
+        // if it's the video stream
+        if (avi_image_context.pPacket->stream_index == avi_image_context.video_stream_index)
+        {
+            response = avcodec_send_packet(avi_image_context.pCodecContext, avi_image_context.pPacket);
+            if (response < 0)
+            {
+                break;
+                goto error_pix_fmt;
+            }
+            else
+            {
+                response = avcodec_receive_frame(avi_image_context.pCodecContext, avi_image_context.pFrame);
+                if (response >= 0)
+                {
+                    // if (fill_rgb_frame(avi_image_context.pFrame) < 0)
+                    // {
+                    //     break;
+                    //     goto error_pix_fmt;
+                    // }
+                    fill_rgb_frame();
+                    copy_to_user((*pixbuf)->data, 0, avi_image_context.rgbFrame->data[0],
+                                 4 * avi_image_context.rgbFrame->width * avi_image_context.rgbFrame->height);
+                    //*pixbuf = pixbuf_get(*pixbuf);
+                    //*pixbuf = avi_image_context.pixbuf;
+                    //*pixbuf = pixbuf_get(avi_image_context.pixbuf);
+                    //av_frame_unref(avi_image_context.pFrame);
+                    //av_frame_unref(avi_image_context.rgbFrame); //????? realloc buffers later?
+                    av_packet_unref(avi_image_context.pPacket);
+                    break;
+                }
+            }
+        }
+        av_packet_unref(avi_image_context.pPacket);
+    }
+    if (response == AVERROR_EOF) // EOF was reached, need to go to start of video
+    {
+        // avio_seek(avi_image_context.pFormatContext->pb, 0, SEEK_SET);
+        if (avformat_seek_file(avi_image_context.pFormatContext, avi_image_context.video_stream_index, 0, 0,
+                               avi_image_context.pFormatContext->streams[avi_image_context.video_stream_index]->duration, 0) >= 0)
+        {
+            goto start;
+        }
+    }
+    return response < 0 ? response : 0;
+
+    error_pix_fmt:
+    av_frame_unref(avi_image_context.pFrame);
+    //av_frame_unref(avi_image_context.rgbFrame);  //????? realloc buffers later?
+    av_packet_unref(avi_image_context.pPacket);
+    return -1;
+}
+
 /** AVI image type */
 struct image_type avi_image_type __image_type(PROBE_NORMAL) = {
     .name = "AVI",
