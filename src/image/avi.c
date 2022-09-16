@@ -374,13 +374,11 @@ static void avi_step ( struct avi_process *avi_process ) {
         printf("avi_get_next_frame error!, frame=%ld\n", avi_process->indexOfFrame);
     }
     else
-    {avi_free
-
+    {
         if (update_console_framebuffer(avi_process->pixbuf) != 0)
         {
             printf("update_console_framebuffer error!, frame=%ld\n", avi_process->indexOfFrame);
-        }
-        
+        }        
     }
 }
 
