@@ -45,6 +45,7 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 #include <ipxe/umalloc.h>
 #include <ipxe/rotate.h>
 #include <config/console.h>
+#include <ipxe/pixbuf.h>
 
 /* Avoid dragging in EFI console if not otherwise used */
 extern struct console_driver efi_console;
@@ -669,8 +670,9 @@ static int efifb_configure ( struct console_configuration *config ) {
 
 int efifb_update_pixbuf(struct pixel_buffer * pixbuf)
 {
+	ufree ( efifb.fbcon.picture.start );
+	efifb.fbcon.picture.start = 0;
 	int ret = fbcon_update_pixbuf(&efifb.fbcon, pixbuf);
-	fbcon_fini(&efifb.fbcon);
 	return ret;
 }
 

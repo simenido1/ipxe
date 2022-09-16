@@ -76,6 +76,8 @@ static struct option_descriptor console_opts[] = {
 static struct command_descriptor console_cmd =
 	COMMAND_DESC ( struct console_options, console_opts, 0, 0, NULL );
 
+extern void avi_stop();
+
 /**
  * "console" command
  *
@@ -91,6 +93,8 @@ static int console_exec ( int argc, char **argv ) {
 	/* Parse options */
 	if ( ( rc = parse_options ( argc, argv, &console_cmd, &opts ) ) != 0 )
 		goto err_parse;
+
+	avi_stop();
 
 	/* Handle background picture, if applicable */
 	if ( opts.picture ) {

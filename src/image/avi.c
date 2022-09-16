@@ -27,6 +27,9 @@ FILE_LICENCE(GPL2_OR_LATER_OR_UBDL);
 #include <string.h>
 #include <ipxe/umalloc.h>
 #include "libavutil/avutil.h"
+#include <ipxe/process.h>
+#include <ipxe/timer.h>
+#include <ipxe/refcnt.h>
 
 static struct avi_image_context
 {
@@ -329,6 +332,79 @@ error_alloc_format_ctx:
     return -1;
 }
 
+
+struct avi_process {
+    struct refcnt refcnt;
+	struct process process;
+    unsigned long next_frame_tick;
+    unsigned long ticks_per_frame;
+    unsigned long indexOfFrame;
+    struct pixel_buffer *pixbuf;
+    struct image *image;    
+};
+static void avi_step ( struct avi_process *avi_process );
+
+static struct process_descriptor avi_process_desc =
+	PROC_DESC ( struct avi_process, process, avi_step);
+
+
+extern int vesafb_update_pixbuf(struct pixel_buffer *pixbuf); //function to update background image with new frame (pcbios)
+extern int efifb_update_pixbuf(struct pixel_buffer * pixbuf); //function to update background image with new frame (efi)
+
+#define EFI //(define here EFI or PCBIOS or nothing)
+int update_console_framebuffer(struct pixel_buffer * pb)
+{
+	#ifdef PCBIOS
+	return vesafb_update_pixbuf(pb);
+	#endif
+	#ifdef EFI
+	return efifb_update_pixbuf(pb);
+	#endif
+	return 1;
+}
+
+static void avi_step ( struct avi_process *avi_process ) {
+    if(currticks() < avi_process->next_frame_tick) {
+        return;
+    }
+    avi_process->next_frame_tick = currticks() + avi_process->ticks_per_frame;  
+
+    if (avi_get_next_frame(avi_process->pixbuf) != 0)
+    {
+        printf("avi_get_next_frame error!, frame=%ld\n", avi_process->indexOfFrame);
+    }
+    else
+    {avi_free
+
+        if (update_console_framebuffer(avi_process->pixbuf) != 0)
+        {
+            printf("update_console_framebuffer error!, frame=%ld\n", avi_process->indexOfFrame);
+        }
+        
+    }
+}
+
+struct avi_process *avi_process = 0;
+
+
+void avi_free(struct refcnt *refcnt) {
+    pixbuf_put(avi_process->pixbuf);
+
+    unregister_image(avi_process->image);
+    free(avi_process);
+    avi_process = 0;
+}
+
+void avi_stop()
+{
+    if(avi_process == 0) {
+        return;
+    }
+
+    process_del(&avi_process->process);
+}
+
+
 /**
  * Convert AVI frame to pixel buffer
  *
@@ -339,66 +415,29 @@ error_alloc_format_ctx:
 
 static int avi_pixbuf(struct image *image, struct pixel_buffer **pixbuf)
 {
-    int response = 0;
-start:
-    while ((response = av_read_frame(avi_image_context.pFormatContext, avi_image_context.pPacket)) >= 0)
-    {
-        // if it's the video stream
-        if (avi_image_context.pPacket->stream_index == avi_image_context.video_stream_index)
-        {
-            response = avcodec_send_packet(avi_image_context.pCodecContext, avi_image_context.pPacket);
-            if (response < 0)
-            {
-                break;
-                goto error_pix_fmt;
-            }
-            else
-            {
-                response = avcodec_receive_frame(avi_image_context.pCodecContext, avi_image_context.pFrame);
-                if (response >= 0)
-                {
-                    // if (fill_rgb_frame(avi_image_context.pFrame) < 0)
-                    // {
-                    //     break;
-                    //     goto error_pix_fmt;
-                    // }
-                    fill_rgb_frame();
-                    copy_to_user(avi_image_context.pixbuf->data, 0, avi_image_context.rgbFrame->data[0],
-                                 4 * avi_image_context.rgbFrame->width * avi_image_context.rgbFrame->height);
-                    //*pixbuf = pixbuf_get(*pixbuf);
-                    //*pixbuf = avi_image_context.pixbuf;
-                    *pixbuf = pixbuf_get(avi_image_context.pixbuf);
-                    //av_frame_unref(avi_image_context.pFrame);
-                    //av_frame_unref(avi_image_context.rgbFrame); //????? realloc buffers later?
-                    av_packet_unref(avi_image_context.pPacket);
-                    break;
-                }
-            }
-        }
-        av_packet_unref(avi_image_context.pPacket);
+    avi_stop();
+    *pixbuf = avi_image_context.pixbuf;
+    int rc = avi_get_next_frame(*pixbuf);
+    if(rc != 0) {
+        return rc;
     }
-    if (response == AVERROR_EOF) // EOF was reached, need to go to start of video
-    {
-        // avio_seek(avi_image_context.pFormatContext->pb, 0, SEEK_SET);
-        if (avformat_seek_file(avi_image_context.pFormatContext, avi_image_context.video_stream_index, 0, 0,
-                               avi_image_context.pFormatContext->streams[avi_image_context.video_stream_index]->duration, 0) >= 0)
-        {
-            goto start;
-        }
-    }
-    return response < 0 ? response : 0;
+    *pixbuf = pixbuf_get(*pixbuf);
 
-error_pix_fmt:
-    av_frame_unref(avi_image_context.pFrame);
-    //av_frame_unref(avi_image_context.rgbFrame);  //????? realloc buffers later?
-    av_packet_unref(avi_image_context.pPacket);
-    return -1;
+    avi_process = zalloc ( sizeof ( *avi_process ) );
+	if ( ! avi_process ) {
+        pixbuf_put(*pixbuf);
+		return -ENOMEM;
+    }
+    avi_process->image = image;
+    avi_process->ticks_per_frame = TICKS_PER_SEC/avi_image_context.framerate;
+    avi_process->next_frame_tick = currticks() + avi_process->ticks_per_frame;    
+  
+    ref_init ( &avi_process->refcnt, avi_free );
+    avi_process->pixbuf = pixbuf_get(*pixbuf);  
+    process_init(&avi_process->process, &avi_process_desc, &avi_process->refcnt);
+
+    return 0;
 }
-
-//int avi_get_next_frame(struct pixel_buffer **pixbuf)
-//{
-//    return avi_pixbuf(NULL, pixbuf);
-//}
 
 double avi_get_framerate(void)
 {
@@ -415,7 +454,7 @@ int avi_get_height(void)
     return avi_image_context.pFrame->height;
 }
 
-int avi_get_next_frame(struct pixel_buffer **pixbuf)
+int avi_get_next_frame(struct pixel_buffer *pixbuf)
 {
     int response = 0;
     start:
@@ -435,19 +474,9 @@ int avi_get_next_frame(struct pixel_buffer **pixbuf)
                 response = avcodec_receive_frame(avi_image_context.pCodecContext, avi_image_context.pFrame);
                 if (response >= 0)
                 {
-                    // if (fill_rgb_frame(avi_image_context.pFrame) < 0)
-                    // {
-                    //     break;
-                    //     goto error_pix_fmt;
-                    // }
                     fill_rgb_frame();
-                    copy_to_user((*pixbuf)->data, 0, avi_image_context.rgbFrame->data[0],
+                    copy_to_user(pixbuf->data, 0, avi_image_context.rgbFrame->data[0],
                                  4 * avi_image_context.rgbFrame->width * avi_image_context.rgbFrame->height);
-                    //*pixbuf = pixbuf_get(*pixbuf);
-                    //*pixbuf = avi_image_context.pixbuf;
-                    //*pixbuf = pixbuf_get(avi_image_context.pixbuf);
-                    //av_frame_unref(avi_image_context.pFrame);
-                    //av_frame_unref(avi_image_context.rgbFrame); //????? realloc buffers later?
                     av_packet_unref(avi_image_context.pPacket);
                     break;
                 }

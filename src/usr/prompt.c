@@ -51,83 +51,16 @@ FILE_LICENCE(GPL2_OR_LATER_OR_UBDL);
  * Returns success if the specified key was pressed within the
  * specified timeout period.
  */
-extern int vesafb_update_pixbuf(struct pixel_buffer *pixbuf); //function to update background image with new frame (pcbios)
-extern int efifb_update_pixbuf(struct pixel_buffer * pixbuf); //function to update background image with new frame (efi)
-extern void efifb_finish(void);
-
-#define EFI //(define here EFI or PCBIOS or nothing)
-int update_console_framebuffer(struct pixel_buffer * pb)
-{
-	#ifdef PCBIOS
-	return vesafb_update_pixbuf(pb);
-	#endif
-	#ifdef EFI
-	return efifb_update_pixbuf(pb);
-	#endif
-	return 1;
-}
-
-int prompt(const char *text, unsigned long timeout, int key, const char *variable, const char *video)
+int prompt(const char *text, unsigned long timeout, int key, const char *variable)
 {
 	int key_pressed = -1;
-	// struct console_configuration console_config;
-	if (video)
-	{
-		char *command;
 
-		asprintf(&command, "console --picture=%s --keep", video);
-		if (system(command) != 0)
-		{
-            free(command);
-            unregister_image(find_image(video));
-            goto video_error;
-		}
-		free(command);
+	/* Display prompt */
+	printf("%s", text);
 
-		double framerate = avi_get_framerate();
-		if (framerate <= 0)
-		{
-			// printf("avi framerate error!");
-			goto video_error;
-		}
-		/* Display prompt */
-		printf("%s", text);
-		unsigned long start = currticks();
-		int ret = 0;
-		int indexOfFrame = 0;
-        struct pixel_buffer *pixbuf = pixbuf_get(alloc_pixbuf(avi_get_width(), avi_get_height()));
-		while (((timeout == 0) || (currticks() - start) < timeout) && key_pressed < 0  && ret >= 0)
-		{
-			if ((ret = avi_get_next_frame(&pixbuf)) != 0)
-			{
-				printf("avi_get_next_frame error!, frame=%d\n", indexOfFrame);
-			}
-			else
-			{
-				indexOfFrame++;
-				if ((ret = update_console_framebuffer(pixbuf)) != 0)
-				{
-					printf("update_console_framebuffer error!, frame=%d\n", indexOfFrame);
-				}
-			}
-			//pixbuf_put(pixbuf);
-			// usleep(1000000 / framerate);
-			key_pressed = getkey(1000 / framerate);
-		}
-	#ifdef EFI
-	efifb_finish();
-	#endif
-	unregister_image(find_image(video));
-	}
-	else
-	{
-	video_error:
-		/* Display prompt */
-		printf("%s", text);
+	/* Wait for key */
+	key_pressed = getkey(timeout);
 
-		/* Wait for key */
-		key_pressed = getkey(timeout);
-	}
 	/* Clear the prompt line */
 	while (*(text++))
 		printf("\b \b");

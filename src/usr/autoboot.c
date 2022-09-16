@@ -556,7 +556,7 @@ static int shell_banner ( void ) {
 	return ( prompt ( "Press Ctrl-B for the " PRODUCT_SHORT_NAME
 			  " command line...",
 			  ( ( BANNER_TIMEOUT * TICKS_PER_SEC ) / 10 ),
-			  CTRL_B, NULL, NULL) == 0 );
+			  CTRL_B, NULL) == 0 );
 }
 
 /**
